@@ -13,6 +13,18 @@ export const LineInput = (
     onChange={e => onChange(e.target.value)} />;
 
 
+export const TextareaInput = (
+  { value, onChange } :
+  {
+    value: string,
+    onChange: (newValue:string) => void
+  }
+) =>
+  <textarea className={styles.textarea}
+    value={value}
+    onChange={e => onChange(e.target.value)} />;
+    
+
 export const Video = (
   { url } :
   { url: string },
