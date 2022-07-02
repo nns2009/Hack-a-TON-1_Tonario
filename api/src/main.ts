@@ -7,6 +7,7 @@ import { PostInfo } from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
 import BN from 'bn.js';
 import { Address, TonClient } from "ton";
+import proxy from 'express-http-proxy';
 
 const config = {
   mongoUrl: process.env.MONGO_URL!,
@@ -34,6 +35,20 @@ async function run() {
 
   app.use(cors());
   app.use(express.json());
+
+  const jsonRpcUrl = new URL(config.tonUrl);
+
+  app.use(
+    '/jsonRPC',
+    proxy(jsonRpcUrl.host, {
+      https: jsonRpcUrl.protocol.startsWith('https'),
+      proxyReqPathResolver: () => jsonRpcUrl.pathname,
+      proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+        proxyReqOpts.headers!['X-API-Key'] = config.tonKey;
+        return proxyReqOpts;
+      },
+    }),
+  );
 
   app.post(
     '/create-channel',
