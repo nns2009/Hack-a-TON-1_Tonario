@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Cell } from 'ton';
 import logo from './logo.svg';
-import './App.css';
+import styles from './App.module.scss';
 
 function App() {
   const [n] = useState(0xff00ff00);
@@ -15,9 +15,9 @@ function App() {
   );
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+    <div className={styles.root}>
+      <header className={styles.header}>
+        <img src={logo} className={styles.logo} alt="logo" />
         <p>
           Bag-of-Cells: <code>{ boc}</code>
         </p>
