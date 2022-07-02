@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import styles from './Feed.module.scss';
 import API from './API';
 import Post from './Post';
 import { PostInfo } from './shared/model';
@@ -16,7 +17,11 @@ function Feed() {
   useEffect(() => { loadPosts(); }, []);
 
   return <div>
-    {posts.map(post => <Post key={post.id} post={post} />)}
+    <div className={styles.postSeparator} />
+    {posts.map(post => <React.Fragment key={post.id}>
+      <Post post={post} />
+      <div className={styles.postSeparator} />
+    </React.Fragment>)}
   </div>
 }
 

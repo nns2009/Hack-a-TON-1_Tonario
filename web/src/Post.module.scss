@@ -1,0 +1,56 @@
+
+.post {
+  border: solid 1px black;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.title {
+  font-size: x-large;
+}
+
+.textTitle {
+  @extend .title;
+  margin: 10px;
+}
+
+.imageContainer {
+  position: relative;
+}
+
+.image {
+  display: block;
+  width: 100%;
+}
+
+.imageTitle {
+  @extend .title;
+
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  //right: 0;
+  padding: 10px 14px 10px 10px;
+  //padding-right: 14px;
+  border-top-right-radius: 10px;
+
+  color: whitesmoke;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.youtubeLinkContainer {
+  margin: 10px;
+}
+.youtubeLink {
+  color: darkblue;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.text {
+  margin: 10px;
+}

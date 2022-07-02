@@ -29,11 +29,12 @@ function Share() {
     {/* <Field label="image URL">
       <LineInput value={imageUrl} onChange={setImageUrl} />
     </Field> */}
-    <hr />
     <Field label="YouTube video URL">
       <LineInput value={videoUrl} onChange={setVideoUrl} />
     </Field>
 
+    <hr />
+    
     <Post post={{
       id: 'new',
       title, text,
