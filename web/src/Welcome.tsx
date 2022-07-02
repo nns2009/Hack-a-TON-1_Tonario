@@ -10,7 +10,7 @@ async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
   const wallet = await tonWalletAdapter.getWallet();
   const channel = await openPaymentChannel(wallet, amount);
   stakeCompleted(
-      Address.parse(wallet.address),
+      //Address.parse(wallet.address),
       channel,
   );
 }
@@ -47,6 +47,8 @@ function Welcome(
       </p>
 
       <div className={styles.stakeButtonGroup}>
+        <StakeButton amount={0.2} stakeCompleted={stakeCompleted} />
+        {/* !!! Remove ^ */}
         <StakeButton amount={1} stakeCompleted={stakeCompleted} />
         <StakeButton amount={2} stakeCompleted={stakeCompleted} />
         <StakeButton amount={5} stakeCompleted={stakeCompleted} />
