@@ -1,11 +1,33 @@
 import cors from 'cors';
 import express from 'express';
-import { MongoClient, ObjectId } from "mongodb";
-import { omit } from "lodash";
+import { MongoClient, ObjectId } from 'mongodb';
+import { omit } from 'lodash';
+import { keyPairFromSeed } from 'ton-crypto';
+import { PostInfo } from '../../web/src/shared/model';
+import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
+import BN from 'bn.js';
+import { Address, TonClient } from "ton";
+
+const config = {
+  mongoUrl: process.env.MONGO_URL!,
+  serviceAddress: process.env.SERVICE_ADDRESS!,
+  serviceSeed: process.env.SERVICE_SEED!,
+  tonUrl: process.env.TON_URL!,
+  tonKey: process.env.TON_KEY!,
+};
 
 async function run() {
   const app = express();
-  const mongoClient = new MongoClient(process.env.MONGO_URL!);
+
+  const mongoClient = new MongoClient(config.mongoUrl);
+  const tonClient = new TonClient({
+    endpoint: config.tonUrl,
+    apiKey: config.tonKey,
+  });
+
+  const serviceKeyPair = keyPairFromSeed(
+    Buffer.from(config.serviceSeed, 'hex')
+  );
 
   const channelCollection = mongoClient.db().collection('channels');
   const postCollection = mongoClient.db().collection('posts');
@@ -19,17 +41,15 @@ async function run() {
       const {
         clientAddress,
         clientPublicKey,
-        clientInitialBalance,
       } = req.body;
 
       const channel = {
         clientAddress,
         clientPublicKey,
-        clientInitialBalance,
-        clientCurrentBalance: 1000000000,
+        clientCurrentBalance: 0,
         clientSeqNo: 0,
-        serviceAddress: '',
-        servicePublicKey: '',
+        serviceAddress: config.serviceAddress,
+        servicePublicKey: serviceKeyPair.publicKey.toString('hex'),
         serviceCurrentBalance: 0,
         serviceSeqNo: 0,
         initialized: false,
@@ -72,17 +92,38 @@ async function run() {
           return;
         }
 
-        // TODO: Check if it's initialized.
+        const paymentChannel = PaymentChannel.create(tonClient, {
+          isA: false,
+          channelId: new BN(channel._id.toString()),
+          myKeyPair: serviceKeyPair,
+          hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
+          addressA: Address.parse(channel.clientAddress),
+          addressB: Address.parse(config.serviceAddress),
+          initBalanceA: new BN(0),
+          initBalanceB: new BN(0),
+        });
+
+        const channelState = await paymentChannel.getChannelState();
+
+        if (channelState !== PaymentChannel.STATE_OPEN) {
+          res
+            .status(400)
+            .json({ error: 'Channel is not open.'})
+          return;
+        }
+
+        const paymentChannelData = await paymentChannel.getData();
 
         await channelCollection.updateOne({
           _id: new ObjectId(channelId),
         }, {
           $set: {
             initialized: true,
+            clientCurrentBalance: paymentChannelData.balanceA.toString(10),
           },
         });
 
-        res.json({ success: true, channel })
+        res.json({ success: true })
       } catch (error) {
         next(error);
       }
@@ -98,10 +139,12 @@ async function run() {
       } = req.body;
 
       // NOTE: Generate `postCount` posts
-      const posts = [...new Array(postCount)].map(() => ({
-          id: new ObjectId().toString(),
-          title: 'Lorem Picsum',
-          imageUrl: 'https://picsum.photos/200'
+      const posts: PostInfo[] = [...new Array(postCount)].map(() => ({
+        id: new ObjectId().toString(),
+        title: 'Lorem Picsum',
+        text: 'Lorem Picsum',
+        imageUrl: 'https://picsum.photos/200',
+        videoUrl: null,
       }));
 
       // TODO: Bill for `posts.length` posts.
