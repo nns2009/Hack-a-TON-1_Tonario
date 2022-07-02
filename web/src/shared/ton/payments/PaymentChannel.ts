@@ -1,7 +1,7 @@
 import {
     Address, Cell, Contract, contractAddress, TonClient,
 } from 'ton';
-import BN from 'bn.js';
+import * as BN from 'bn.js';
 import { KeyPair, sign, signVerify } from 'ton-crypto';
 import { Buffer } from 'buffer';
 import { PaymentChannelSource } from './sources/PaymentChannelSource';
@@ -27,6 +27,7 @@ import {
     createSettleConditionalsBody,
     createFinishUncooperativeClose,
 } from './PaymentUtils';
+import GetMethodParser from '../getMethodParser';
 
 export class PaymentChannel implements Contract {
     static create(client: TonClient, opts: {
@@ -393,7 +394,7 @@ export class PaymentChannel implements Contract {
 
     async getChannelState(): Promise<number> {
         const { stack } = await this.client.callGetMethod(this.address, 'get_channel_state');
-        return new BN(stack[0][1]).toNumber();
+        return new BN(stack[0][1].replace(/^0x/, ''), 'hex').toNumber();
     }
 
     async getData(): Promise<{
@@ -418,24 +419,27 @@ export class PaymentChannel implements Contract {
             if (hex.length % 2 !== 0) hex = `0${hex}`;
             return Buffer.from(hex, 'hex');
         };
+        const { stack } = await this.client.callGetMethod(this.address, 'get_channel_data');
 
-        const { stack } = await this.client.callGetMethod(this.address, 'get_channel_state');
-        console.log(JSON.stringify(stack));
-        const state = new BN(stack[0][1]).toNumber();
-        const balanceA = new BN(stack[1][1][0][1]);
-        const balanceB = new BN(stack[1][1][1][1]);
-        const publicKeyA = bnToBytes(new BN(stack[2][1][0][1]));
-        const publicKeyB = bnToBytes(new BN(stack[2][1][1][1]));
-        const channelId = new BN(stack[3][1]);
-        const quarantineDuration = new BN(stack[4][1][0][1]).toNumber();
-        const misbehaviorFine = new BN(stack[4][1][1][1]);
-        const conditionalCloseDuration = new BN(stack[4][1][2][1]).toNumber();
-        const seqnoA = new BN(stack[5][1][0][1]);
-        const seqnoB = new BN(stack[5][1][1][1]);
-        const quarantine = Cell.fromBoc(Buffer.from(stack[6][1].bytes, 'base64'))[0];
-        const excessFee = new BN(stack[7][1][0][1]);
-        const addressA = Address.parse(stack[7][1][1][1]);
-        const addressB = Address.parse(stack[7][1][2][1]);
+        const result = GetMethodParser.parseStack(stack);
+        console.log(result);
+        const state = result[0].toNumber();
+        const balanceA = result[1][0];
+        const balanceB = result[1][1];
+        const publicKeyA = bnToBytes(result[2][0]);
+        const publicKeyB = bnToBytes(result[2][1]);
+        const channelId = result[3];
+        const quarantineDuration = result[4][0].toNumber();
+        const misbehaviorFine = result[4][1];
+        const conditionalCloseDuration = result[4][2].toNumber();
+        const seqnoA = result[5][0];
+        const seqnoB = result[5][1];
+        const quarantine = result[6]; // Cell
+        const excessFee = result[7][0];
+        const addressA = result[7][1].beginParse()
+            .readAddress()!;
+        const addressB = result[7][2].beginParse()
+            .readAddress()!;
         return {
             state,
             balanceA,

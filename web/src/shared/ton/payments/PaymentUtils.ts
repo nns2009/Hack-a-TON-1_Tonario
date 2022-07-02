@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { Cell } from 'ton';
-import BN from 'bn.js';
+import * as BN from 'bn.js';
 
 export const writePublicKey = (cell: Cell, publicKey: Buffer) => {
     if (publicKey.length !== 256 / 8) {
