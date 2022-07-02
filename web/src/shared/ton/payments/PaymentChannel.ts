@@ -143,7 +143,7 @@ export class PaymentChannel implements Contract {
         op: number,
         cellForSigning: Cell,
     ): Promise<{ cell: Cell, signature: Buffer }> {
-        const signature = sign(cellForSigning.toBoc({ idx: false }), this.myKeyPair.secretKey);
+        const signature = sign(cellForSigning.hash(), this.myKeyPair.secretKey);
         // const signature = nacl.sign.detached(await cellForSigning.hash(), this.options.myKeyPair.secretKey);
 
         const cell = createOneSignature({
@@ -164,8 +164,7 @@ export class PaymentChannel implements Contract {
         hisSignature: Buffer,
         cellForSigning: Cell,
     ): Promise<{ cell: Cell, signature: Buffer }> {
-        const signature = sign(cellForSigning.toBoc({ idx: false }), this.myKeyPair.secretKey);
-        // const signature = nacl.sign.detached(await cellForSigning.hash(), this.options.myKeyPair.secretKey);
+        const signature = sign(cellForSigning.hash(), this.myKeyPair.secretKey);
 
         const signatureA = this.isA ? signature : hisSignature;
         const signatureB = !this.isA ? signature : hisSignature;
@@ -183,7 +182,7 @@ export class PaymentChannel implements Contract {
         };
     }
 
-    async createTopUpBalance(params: { coinsA: BN, coinsB: BN }): Promise<Cell> {
+    createTopUpBalance(params: { coinsA: BN, coinsB: BN }): Cell {
         return createTopUpBalance(params);
     }
 
@@ -246,7 +245,7 @@ export class PaymentChannel implements Contract {
             }),
         });
         // const signature = nacl.sign.detached(await state.hash(), this.options.myKeyPair.secretKey);
-        const signature = sign(state.toBoc({ idx: false }), this.myKeyPair.secretKey);
+        const signature = sign(state.hash(), this.myKeyPair.secretKey);
         const cell = createSignedSemiChannelState({
             signature,
             state,
@@ -310,7 +309,7 @@ export class PaymentChannel implements Contract {
         const hash = await state.hash();
         // return nacl.sign.detached.verify(hash, hisSignature, this.options.isA ? this.options.publicKeyB : this.options.publicKeyA);
         return signVerify(
-            state.toBoc({ idx: false }),
+            state.hash(),
             hisSignature,
             this.isA ? this.publicKeyB : this.publicKeyA,
         );
@@ -336,7 +335,7 @@ export class PaymentChannel implements Contract {
         const hash = await cell.hash();
         // return nacl.sign.detached.verify(hash, hisSignature, this.options.isA ? this.options.publicKeyB : this.options.publicKeyA);
         return signVerify(
-            cell.toBoc({ idx: false }),
+            cell.hash(),
             hisSignature,
             this.isA ? this.publicKeyB : this.publicKeyA,
         );
@@ -393,7 +392,8 @@ export class PaymentChannel implements Contract {
     static STATE_AWAITING_FINALIZATION = 4;
 
     async getChannelState(): Promise<number> {
-        const { stack } = await this.client.callGetMethod(this.address, 'get_channel_state');
+        const { stack, exit_code } = await this.client.callGetMethodWithError(this.address, 'get_channel_state');
+        if (exit_code < 0) { return PaymentChannel.STATE_UNINITED; }
         return new BN(stack[0][1].replace(/^0x/, ''), 'hex').toNumber();
     }
 

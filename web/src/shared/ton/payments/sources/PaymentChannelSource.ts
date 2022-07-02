@@ -1,7 +1,7 @@
 import {
     Address, Cell, ConfigStore, ContractSource,
 } from 'ton';
-import BN from "bn.js";
+import BN from 'bn.js';
 import { Buffer } from 'buffer';
 import { ClosingConfig } from '../types';
 import { writePublicKey } from '../PaymentUtils';
