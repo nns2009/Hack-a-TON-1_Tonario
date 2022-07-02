@@ -34,6 +34,7 @@ function Share() {
     </Field>
 
     <hr />
+    <h3>Preview</h3>
 
     <Post post={{
       id: 'new',

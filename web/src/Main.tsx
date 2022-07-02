@@ -25,13 +25,13 @@ const NavLink = (params: { to: string, title: string }) =>
 function Main() {
   return <div>
     <header className={styles.header}>
-      OnlyGrams.io 
+      <img src="/BannerLogoSmall.png" className={styles.bannerLogo} />
+      <nav className={styles.nav}>
+        <NavLink to='/feed' title='Feed' />
+        <NavLink to='/share' title='Share' />
+        <NavLink to='/about' title='About' />
+      </nav>
     </header>
-    <nav className={styles.nav}>
-      <NavLink to='/feed' title='Feed' />
-      <NavLink to='/share' title='Share' />
-      <NavLink to='/about' title='About' />
-    </nav>
 
     <Routes>
       <Route path="/" element={<RedirectToFeed />} />

@@ -7,6 +7,7 @@ import {tonWalletAdapter} from "./shared/ton/ton-wallet/TonWalletWalletAdapter";
 
 async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
   console.log(`"Staking" ${amount} TONs`); // not Nano-TONs
+  stakeCompleted({} as any); return;
   const wallet = await tonWalletAdapter.getWallet();
   const channel = await openPaymentChannel(wallet, amount);
   stakeCompleted(
@@ -47,7 +48,7 @@ function Welcome(
       </p>
 
       <div className={styles.stakeButtonGroup}>
-        <StakeButton amount={0.2} stakeCompleted={stakeCompleted} />
+        <StakeButton amount={0.1} stakeCompleted={stakeCompleted} />
         {/* !!! Remove ^ */}
         <StakeButton amount={1} stakeCompleted={stakeCompleted} />
         <StakeButton amount={2} stakeCompleted={stakeCompleted} />

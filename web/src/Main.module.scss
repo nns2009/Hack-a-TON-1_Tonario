@@ -1,30 +1,41 @@
 @use 'Common.module.scss';
 
 .header {
-  background-color: Common.$background-color;
+  //background-color: Common.$background-color;
   //min-height: 100vh;
+  //padding: 10px 0px;
   display: flex;
-  flex-direction: column;
+  //flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   font-size: calc(10px + 2vmin);
   color: white;
+  border-bottom: solid 1px gray;
 }
 
+.bannerLogo {
+  //height: 30px;
+  //transform: translateZ(0);
+}
 
 .nav {
-  border-top: solid 1px gray;
-  border-bottom: solid 1px gray;
+  align-self: flex-end;
+  // border-top: solid 1px gray;
+  // border-bottom: solid 1px gray;
 }
 
 .navLink {
   display: inline-block;
-  padding: 1em;
+  padding: 16px;
 
-  color: #333;
+  color: #222;
   text-decoration: none;
 
+  transition: background-color Common.$transitionDuration,
+    color Common.$transitionDuration;
+
   &:hover {
-    background-color: rgb(204, 255, 255);
+    color: white;
+    background-color: #35ace0;
   }
 }
