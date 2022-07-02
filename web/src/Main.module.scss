@@ -1,5 +1,17 @@
 @use 'Common.module.scss';
 
+.header {
+  background-color: Common.$background-color;
+  //min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+
 .nav {
   border-top: solid 1px gray;
   border-bottom: solid 1px gray;

@@ -15,17 +15,14 @@ function App() {
 
   return (
     <div className={styles.root}>
-      <header className={styles.header}>
-        OnlyGrams.io 
-      </header>
-      <div className={styles.page}>
-        {myAddress?.toFriendly()}
-        {
-          !myAddress
-          ? <Welcome stakeCompleted={ (address, channel) => setMyAddress(address) } />
-          : <Main />
-        }
-      </div>
+      {/* {myAddress?.toFriendly()} */}
+      {
+        !myAddress
+        ? <Welcome stakeCompleted={ (address, amount) => setMyAddress(address) } />
+        : <div className={styles.page}>
+          <Main />
+        </div>
+      }
     </div>
   );
 }

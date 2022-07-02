@@ -24,6 +24,9 @@ const NavLink = (params: { to: string, title: string }) =>
 
 function Main() {
   return <div>
+    <header className={styles.header}>
+      OnlyGrams.io 
+    </header>
     <nav className={styles.nav}>
       <NavLink to='/feed' title='Feed' />
       <NavLink to='/share' title='Share' />

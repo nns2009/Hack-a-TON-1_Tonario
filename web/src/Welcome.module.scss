@@ -1,0 +1,53 @@
+
+$borderColor: #1084b3; // #37aee1;
+
+.welcomePage {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.window {
+  font-size: 21px;
+  width: 70%;
+  max-width: 700px;
+}
+
+.bannerLogo {
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+
+.stakeButtonGroup {
+  display: inline-block;
+  overflow: hidden;
+  border: solid 1px $borderColor;
+  border-radius: 6px;
+}
+
+.stakeButton {
+  padding: 12px;
+  font-family: 'Calibri';
+  font-size: 22px;
+
+  color: white;
+  
+  //text-shadow: #032b3c 0px 0px 1px;
+  background: linear-gradient(#6dcbf3, #3eb2e4);
+  cursor: pointer;
+
+  border: none;
+  &:not(:first-child) {
+    border-left: solid 1px $borderColor;
+  }
+  background-size:1px 43px; 
+  transition: background-position 0.1s, color 0.2s;
+  &:hover {
+    color: #032b3c;
+    //background: linear-gradient(#37aee2, #1e96c8);
+    background-position:100px;  
+  }
+}
