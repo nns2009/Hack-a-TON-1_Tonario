@@ -34,12 +34,13 @@ function Share() {
     </Field>
 
     <hr />
-    
+
     <Post post={{
       id: 'new',
       title, text,
       imageUrl: image ? URL.createObjectURL(image) : null,
-      videoUrl
+      videoUrl,
+      createdAt: '',
     }} />
   </div>
 }
