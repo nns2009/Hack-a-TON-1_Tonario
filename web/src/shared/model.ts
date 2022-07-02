@@ -4,5 +4,6 @@ export type PostInfo = {
   text: string,
   imageUrl: string | null,
   videoUrl: string | null,
-  // reactions: 
+  createdAt: string,
+  // reactions:
 }

@@ -1,6 +1,6 @@
 import cors from 'cors';
-import express, { Request } from 'express';
-import { MongoClient, ObjectId } from 'mongodb';
+import express, { NextFunction, Request, Response } from 'express';
+import { MongoClient, ObjectId, WithId } from 'mongodb';
 import { omit } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
 import { PostInfo } from '../../web/src/shared/model';
@@ -59,15 +59,17 @@ async function run() {
     apiKey: config.tonKey,
   });
 
+  const s3 = new AWS.S3({
+    endpoint: new AWS.Endpoint(config.s3.endpoint),
+    accessKeyId: config.s3.keyId,
+    secretAccessKey: config.s3.secretKey,
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+  });
+
   const upload = multer({
     storage: multerS3({
-      s3: new AWS.S3({
-        endpoint: new AWS.Endpoint(config.s3.endpoint),
-        accessKeyId: config.s3.keyId,
-        secretAccessKey: config.s3.secretKey,
-        s3ForcePathStyle: true,
-        signatureVersion: 'v4',
-      }),
+      s3,
       bucket: config.s3.bucket,
       key(request: Request, file, callback) {
         const fileId = uuidv4();
@@ -219,18 +221,22 @@ async function run() {
         // TODO: Verify signature.
         // ...
 
-        // NOTE: Generate `postCount` posts
-        const posts: PostInfo[] = [...new Array(postCount)].map(() => ({
-          id: new ObjectId().toString(),
-          title: 'Lorem Picsum',
-          text: 'Lorem Picsum',
-          imageUrl: 'https://picsum.photos/800',
-          videoUrl: null,
-          createdAt: new Date().toISOString(),
-        }));
+        const posts = await postCollection
+          .find(
+            {},
+            { limit: postCount },
+          )
+          .toArray();
 
         res.json({
-          posts,
+          posts: posts.map((post: WithId<Post>): PostInfo => ({
+            id: post._id.toString(),
+            title: post.title,
+            text: post.text,
+            imageUrl: post.imageId && `/images/${post.imageId}`,
+            videoUrl: null,
+            createdAt: post.createdAt,
+          })),
           next: new ObjectId().toString(),
         });
       } catch (error) {
@@ -268,6 +274,39 @@ async function run() {
       }
     },
   );
+
+  app.get(
+    '/images/:imageId',
+    async (req, res, next) => {
+      const { imageId } = req.params;
+
+      try {
+        const image = await s3
+          .getObject({
+            Bucket: config.s3.bucket,
+            Key: `images/${imageId}`,
+          })
+          .promise();
+
+        res.end(image.Body);
+      } catch (error) {
+        if ((error as any).code === 'NoSuchKey') {
+          return res
+            .status(404)
+            .json({ error: 'Image does not exist.' });
+        }
+
+        next(error);
+      }
+    },
+  );
+
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error('Unexpected error:', err);
+    res
+      .status(500)
+      .json({ error: 'Unexpected error.' });
+  });
 
   await mongoClient.connect();
 
