@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Address } from 'ton';
+
+import './Global.scss';
 import styles from './App.module.scss';
 import Welcome from './Welcome';
 import Main from './Main';
@@ -14,14 +16,16 @@ function App() {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        TonoGram
+        OnlyGrams.io 
       </header>
-      {myAddress?.toFriendly()}
-      {
-        !myAddress
-        ? <Welcome stakeCompleted={ (address, channel) => setMyAddress(address) } />
-        : <Main />
-      }
+      <div className={styles.page}>
+        {myAddress?.toFriendly()}
+        {
+          !myAddress
+          ? <Welcome stakeCompleted={ (address, channel) => setMyAddress(address) } />
+          : <Main />
+        }
+      </div>
     </div>
   );
 }

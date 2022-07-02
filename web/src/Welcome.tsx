@@ -28,7 +28,7 @@ function Welcome(
 ) {
   return <div>
     <p>
-      Welcome to TonoGram! Show your favorite creators your micro-support with micro-payments. Or become a creator and earn yourself a fortune doing what you love.
+      Welcome to OnlyGrams.io! Show your favorite creators your micro-support with micro-payments. Or become a creator and earn yourself a fortune doing what you love.
     </p>
 
     <p>
