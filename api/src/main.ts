@@ -161,7 +161,7 @@ async function run() {
 
         const paymentChannel = PaymentChannel.create(tonClient, {
           isA: false,
-          channelId: new BN(channel._id.toString()),
+          channelId: new BN(channel._id.toString(), 'hex'),
           myKeyPair: serviceKeyPair,
           hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
           addressA: Address.parse(channel.clientAddress),
