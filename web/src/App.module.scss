@@ -1,4 +1,5 @@
 $background-color: #282c34;
+$link-color: #61dafb;
 
 .root {
   text-align: center;
@@ -24,6 +25,10 @@ $background-color: #282c34;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+}
+
+.link {
+  color: $link-color;
 }
 
 @keyframes logo-spin {
