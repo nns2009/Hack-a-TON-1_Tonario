@@ -1,7 +1,7 @@
 import { PostInfo } from "./shared/model";
 
-function Post(params: PostInfo) {
-  const { title, text, imageUrl, videoUrl } = params;
+function Post(params: { post: PostInfo }) {
+  const { title, text, imageUrl, videoUrl } = params.post;
 
   return <div>
     {imageUrl && <img src={imageUrl} />}
