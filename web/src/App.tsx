@@ -3,19 +3,23 @@ import { Address } from 'ton';
 import styles from './App.module.scss';
 import Welcome from './Welcome';
 import Main from './Main';
+import BN from 'bn.js';
 
+
+export type StakeCompletedHandler = (address: Address, amount: BN) => void;
 
 function App() {
-  const loginAddress: Address | null = Address.parse('EQAa_d5RopvY6ZLcQFNJHFmdA8wf_igH-V-5Jc8DRprJIZa-');
+  const [myAddress, setMyAddress] = useState<Address | null>(null);
 
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        TonoGram
+        TonoGram 
       </header>
+      {myAddress?.toFriendly()}
       {
-        !loginAddress
-        ? <Welcome />
+        !myAddress
+        ? <Welcome stakeCompleted={ (address, amount) => setMyAddress(address) } />
         : <Main />
       }
     </div>
