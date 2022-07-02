@@ -1,6 +1,9 @@
 import { useState } from "react";
 
-import { LineInput } from "./UI";
+import { Field, LineInput } from "./UI";
+
+
+
 
 function Share() {
   const [title, setTitle] = useState('');
@@ -9,8 +12,12 @@ function Share() {
   const [videoUrl, setVideoUrl] = useState('');
 
   return <div>
-    <LineInput value={title} onChange={setTitle} />
-    <LineInput value={text} onChange={() => {}} />
+    <Field label="title">
+      <LineInput value={title} onChange={setTitle} />
+    </Field>
+    <Field label="text">
+      <LineInput value={text} onChange={() => {}} />
+    </Field>
   </div>
 }
 

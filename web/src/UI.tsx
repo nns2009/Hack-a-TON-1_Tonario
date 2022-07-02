@@ -1,3 +1,4 @@
+import styles from './UI.module.scss';
 
 
 export const LineInput = (
@@ -11,3 +12,11 @@ export const LineInput = (
     value={value}
     onChange={e => onChange(e.target.value)} />;
 
+
+export const Field = (params: {
+  label: string,
+  children: React.ReactNode,
+}) => <div>
+  <div className={styles.fieldLabel}>{params.label}</div>
+  {params.children}
+</div>
