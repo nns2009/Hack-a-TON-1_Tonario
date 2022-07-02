@@ -47,6 +47,7 @@ interface Post {
   text: string;
   imageId: string | null;
   videoId: string | null;
+  createdAt: string;
 }
 
 async function run() {
@@ -201,31 +202,37 @@ async function run() {
         channelId,
         postCount,
         signature,
+        cursor,
       } = req.body;
 
-      const channel = await channelCollection.findOne({
-        _id: new ObjectId(channelId),
-      });
-
-      if (!channel) {
-        return res
-          .status(400)
-          .json({ error: 'Channel does not exist.' });
-      }
-
-      // TODO: Verify signature.
-
-      // NOTE: Generate `postCount` posts
-      const posts: PostInfo[] = [...new Array(postCount)].map(() => ({
-        id: new ObjectId().toString(),
-        title: 'Lorem Picsum',
-        text: 'Lorem Picsum',
-        imageUrl: 'https://picsum.photos/800',
-        videoUrl: null,
-      }));
-
       try {
-        res.json(posts);
+        const channel = await channelCollection.findOne({
+          _id: new ObjectId(channelId),
+        });
+
+        if (!channel) {
+          return res
+            .status(400)
+            .json({ error: 'Channel does not exist.' });
+        }
+
+        // TODO: Verify signature.
+        // ...
+
+        // NOTE: Generate `postCount` posts
+        const posts: PostInfo[] = [...new Array(postCount)].map(() => ({
+          id: new ObjectId().toString(),
+          title: 'Lorem Picsum',
+          text: 'Lorem Picsum',
+          imageUrl: 'https://picsum.photos/800',
+          videoUrl: null,
+          createdAt: new Date().toISOString(),
+        }));
+
+        res.json({
+          posts,
+          next: new ObjectId().toString(),
+        });
       } catch (error) {
         next(error);
       }
@@ -247,6 +254,7 @@ async function run() {
           text,
           imageId,
           videoId: null,
+          createdAt: new Date().toISOString(),
         };
 
         const { insertedId: postId } = await postCollection.insertOne(post);
