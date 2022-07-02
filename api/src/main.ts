@@ -14,6 +14,8 @@ import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 const config = {
+  port: process.env.PORT,
+
   mongoUrl: process.env.MONGO_URL!,
 
   serviceAddress: process.env.SERVICE_ADDRESS!,
@@ -310,8 +312,10 @@ async function run() {
 
   await mongoClient.connect();
 
-  app.listen(3200, () => {
-    console.log('Server started listening on 3200 port.');
+  const port = config.port ? parseInt(config.port, 10) : 3200;
+
+  app.listen(port, () => {
+    console.log(`Server started listening on ${port} port.`);
   });
 }
 
