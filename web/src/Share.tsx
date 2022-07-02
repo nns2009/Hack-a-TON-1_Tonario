@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Field, LineInput } from "./UI";
+import { Field, LineInput, Video } from "./UI";
 
 
 
@@ -16,8 +16,18 @@ function Share() {
       <LineInput value={title} onChange={setTitle} />
     </Field>
     <Field label="text">
-      <LineInput value={text} onChange={() => {}} />
+      <LineInput value={text} onChange={setText} />
     </Field>
+    <Field label="image URL">
+      <LineInput value={imageUrl} onChange={setImageUrl} />
+    </Field>
+    <img src={imageUrl} />
+    <hr />
+    <Field label="YouTube video URL">
+      <LineInput value={videoUrl} onChange={setVideoUrl} />
+    </Field>
+    {videoUrl.search(/youtu/i) >= 0 && <Video url={videoUrl} />}
+
   </div>
 }
 

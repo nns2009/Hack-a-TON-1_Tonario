@@ -1,14 +1,12 @@
 import { PostInfo } from "./shared/model";
+import { Video } from "./UI";
 
 function Post(params: { post: PostInfo }) {
   const { title, text, imageUrl, videoUrl } = params.post;
 
   return <div>
     {imageUrl && <img src={imageUrl} />}
-    {videoUrl &&
-      <iframe width="560" height="315"
-        src={videoUrl} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-    }
+    {videoUrl && <Video url={videoUrl} />}
     <h1>{title}</h1>
     <div>{text}</div>
   </div>
