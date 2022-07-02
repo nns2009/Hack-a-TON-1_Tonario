@@ -1,23 +1,26 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import { Cell } from 'ton';
 import logo from './logo.svg';
 import './App.css';
 
 function App() {
+  const [n] = useState(0xff00ff00);
+  const boc = useMemo(
+    () => {
+      const cell = new Cell();
+      cell.bits.writeUint(n, 32);
+      return cell.toBoc().toString('base64');
+    },
+    [n],
+  );
+
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          Bag-of-Cells: <code>{ boc}</code>
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
       </header>
     </div>
   );
