@@ -1,13 +1,12 @@
-$background-color: #282c34;
-$link-color: #61dafb;
+@use 'Common.module.scss';
 
 .root {
   text-align: center;
 }
 
 .header {
-  background-color: $background-color;
-  min-height: 100vh;
+  background-color: Common.$background-color;
+  //min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,5 +16,5 @@ $link-color: #61dafb;
 }
 
 .link {
-  color: $link-color;
+  color: Common.$link-color;
 }

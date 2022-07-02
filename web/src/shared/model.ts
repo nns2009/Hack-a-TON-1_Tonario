@@ -2,7 +2,7 @@ export type PostInfo = {
   id: string,
   title: string,
   text: string,
-  imageSrc: string | null,
-  videoSrc: string | null,
+  imageUrl: string | null,
+  videoUrl: string | null,
   // reactions: 
 }

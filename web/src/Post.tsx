@@ -1,13 +1,13 @@
 import { PostInfo } from "./shared/model";
 
 function Post(params: PostInfo) {
-  const { title, text, imageSrc, videoSrc } = params;
+  const { title, text, imageUrl, videoUrl } = params;
 
   return <div>
-    {imageSrc && <img src={imageSrc} />}
-    {videoSrc &&
+    {imageUrl && <img src={imageUrl} />}
+    {videoUrl &&
       <iframe width="560" height="315"
-        src={videoSrc} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        src={videoUrl} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
     }
     <h1>{title}</h1>
     <div>{text}</div>

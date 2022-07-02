@@ -1,0 +1,18 @@
+@use 'Common.module.scss';
+
+.nav {
+  border-top: solid 1px gray;
+  border-bottom: solid 1px gray;
+}
+
+.navLink {
+  display: inline-block;
+  padding: 1em;
+
+  color: #333;
+  text-decoration: none;
+
+  &:hover {
+    background-color: rgb(204, 255, 255);
+  }
+}
