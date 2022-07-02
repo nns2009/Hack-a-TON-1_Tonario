@@ -1,6 +1,6 @@
 import { Cell } from 'ton';
 import { Buffer } from 'buffer';
-import * as BN from 'bn.js';
+import BN from "bn.js";
 
 export default class GetMethodParser {
     static parseObject(x: any): any {

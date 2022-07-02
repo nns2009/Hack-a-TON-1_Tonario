@@ -1,7 +1,7 @@
 import {
     Address, Cell, Contract, contractAddress, TonClient,
 } from 'ton';
-import * as BN from 'bn.js';
+import BN from "bn.js";
 import { KeyPair, sign, signVerify } from 'ton-crypto';
 import { Buffer } from 'buffer';
 import { PaymentChannelSource } from './sources/PaymentChannelSource';
