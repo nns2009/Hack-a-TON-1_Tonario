@@ -266,7 +266,7 @@ async function run() {
           balanceA: new BN(channel.clientCurrentBalance, 10),
           balanceB: new BN(channel.serviceCurrentBalance, 10),
           seqnoA: new BN(channel.clientSeqNo, 10),
-          seqnoB: new BN(channel.serviceSeqNo, 10),
+          seqnoB: new BN(channel.serviceSeqNo, 10).add(new BN(1)),
         };
 
         const paymentChannel = PaymentChannel.create({
