@@ -82,9 +82,7 @@ function App() {
       {
         !paymentChannel
         ? <Welcome stakeCompleted={updatePaymentChannel} />
-        : <div className={styles.page}>
-          <Main share={share} requestContent={requestContent} />
-        </div>
+        : <Main share={share} requestContent={requestContent} />
       }
     </div>
   );

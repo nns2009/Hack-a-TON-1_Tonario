@@ -1,5 +1,12 @@
 @use 'Common.module.scss';
 
+.page {
+  margin: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  max-width: 800px;
+}
+
 .header {
   //background-color: Common.$background-color;
   //min-height: 100vh;
@@ -39,3 +46,4 @@
     background-color: #35ace0;
   }
 }
+
