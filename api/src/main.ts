@@ -421,8 +421,6 @@ async function run() {
     },
   );
 
-  // sharp()
-
   app.post(
     '/create-post',
     upload.single('image'),
@@ -447,7 +445,7 @@ async function run() {
             .resize({
               width: 1000,
               height: 1000,
-              fit: 'contain',
+              fit: 'inside',
             })
             .png({
               compressionLevel: 9,
