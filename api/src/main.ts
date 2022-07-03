@@ -284,10 +284,10 @@ async function run() {
 
         res.json({
           state: {
-            balanceA: channelState.balanceA.toString(10),
-            balanceB: channelState.balanceB.toString(10),
-            seqnoA: channelState.seqnoA.toString(10),
-            seqnoB: channelState.seqnoB.toString(10),
+            balanceA: channelState.balanceA.toString('hex'),
+            balanceB: channelState.balanceB.toString('hex'),
+            seqnoA: channelState.seqnoA.toString('hex'),
+            seqnoB: channelState.seqnoB.toString('hex'),
           },
           signature: signature.toString('hex'),
         });
