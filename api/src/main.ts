@@ -11,9 +11,10 @@ import BN from 'bn.js';
 import { Address, TonClient } from "ton";
 import proxy from 'express-http-proxy';
 import AWS from 'aws-sdk';
-import multer from 'multer';
-import multerS3 from 'multer-s3';
+import multer, { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import sharp from "sharp";
+import * as fs from "fs";
 
 const config = {
   port: process.env.PORT,
@@ -26,13 +27,6 @@ const config = {
 
   tonUrl: process.env.TON_URL!,
   tonKey: process.env.TON_KEY!,
-
-  s3: {
-    endpoint: process.env.AWS_ENDPOINT!,
-    keyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    bucket: process.env.AWS_S3_BUCKET!,
-  },
 };
 
 interface Channel {
@@ -79,21 +73,11 @@ async function run() {
     apiKey: config.tonKey,
   });
 
-  const s3 = new AWS.S3({
-    endpoint: new AWS.Endpoint(config.s3.endpoint),
-    accessKeyId: config.s3.keyId,
-    secretAccessKey: config.s3.secretKey,
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4',
-  });
-
   const upload = multer({
-    storage: multerS3({
-      s3,
-      bucket: config.s3.bucket,
-      key(request: Request, file, callback) {
-        const fileId = uuidv4();
-        callback(null, `images/${fileId}`);
+    storage: diskStorage({
+      destination: 'uploads',
+      filename: (_, __, callback: (error: (Error | null), filename: string) => void) => {
+        callback(null, uuidv4());
       },
     }),
   });
@@ -437,6 +421,8 @@ async function run() {
     },
   );
 
+  // sharp()
+
   app.post(
     '/create-post',
     upload.single('image'),
@@ -454,8 +440,22 @@ async function run() {
 
         await checkSign(channelId, channel, newChannelState, signature, PRICES.CREATE);
 
-        const { key: imageKey } = req.file as any;
-        const imageId = imageKey.replace(/^images\//, '');
+        const { filename: imageId } = req.file as any;
+
+        if (imageId) {
+          await sharp(`uploads/${imageId}`)
+            .resize({
+              width: 1000,
+              height: 1000,
+              fit: 'contain',
+            })
+            .png({
+              compressionLevel: 9,
+              adaptiveFiltering: true,
+              force: true,
+            })
+            .toFile(`uploads/${imageId}_optimized`);
+        }
 
         const post: Post = {
           author: channel.clientAddress,
@@ -484,22 +484,18 @@ async function run() {
     async (req, res, next) => {
       const { imageId } = req.params;
 
-      try {
-        const image = await s3
-          .getObject({
-            Bucket: config.s3.bucket,
-            Key: `images/${imageId}`,
-          })
-          .promise();
+      // TODO: Check if it's uuid.
 
-        res.end(image.Body);
-      } catch (error) {
-        if ((error as any).code === 'NoSuchKey') {
+      try {
+        if (!fs.existsSync(`uploads/${imageId}_optimized`)) {
           return res
             .status(404)
             .json({ error: 'Image does not exist.' });
         }
 
+        fs.createReadStream(`uploads/${imageId}_optimized`)
+          .pipe(res);
+      } catch (error) {
         next(error);
       }
     },
