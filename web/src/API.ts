@@ -1,4 +1,5 @@
 import {
+  CloseChannelRequest, CloseChannelResponse,
   CreateChannelRequest,
   CreateChannelResponse, CreatePostRequest,
   InitChannelRequest,
@@ -53,6 +54,8 @@ const createChannel = (params: CreateChannelRequest) =>
 const initChannel = (params: InitChannelRequest) =>
   request<InitChannelResponse>('init-channel', params);
 
+const closeChannel = (params: CloseChannelRequest) =>
+  request<CloseChannelResponse>('close-channel', params);
 
 export default {
   // react,
@@ -60,4 +63,5 @@ export default {
   requestContent,
   createChannel,
   initChannel,
+  closeChannel
 };

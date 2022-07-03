@@ -161,3 +161,41 @@ export const signReceiveTons = async (channel: PaymentChannel, amount: BN): Prom
     const sign = await channel.signState(channel.channelState);
     return sign.toString('hex');
 }
+
+export const closePaymentChannel = async (paymentChannel: PaymentChannel) => {
+    const close = await API.closeChannel({channelId: paymentChannel.channelId.toString(16)})
+
+    const closeChannelBody = new Cell();
+
+    const closeState = {
+        balanceA: new BN(close.state.balanceA, 16), balanceB: new BN(close.state.balanceB, 16),
+        seqnoA: new BN(close.state.seqnoA, 16), seqnoB: new BN(close.state.seqnoB, 16)
+    }
+    const closeBody = await paymentChannel.createCooperativeCloseChannel({...closeState, hisSignature: Buffer.from(close.signature, 'hex')}).then((x) => x.cell);
+
+    // close
+    const msg1 = new Cell();
+    new InternalMessage({
+        to: paymentChannel.address,
+        value: toNano(0.015),
+        bounce: false,
+        body: new CommonMessageInfo({
+            stateInit: undefined,
+            body: new CellMessage(closeBody),
+        })
+    }).writeTo(msg1);
+    closeChannelBody.refs[0] = msg1;
+
+    await tonWalletAdapter.createSession();
+    await tonWalletAdapter.requestCustomTransfer(closeChannelBody);
+
+    const sleep = (m: any) => new Promise(r => setTimeout(r, m))
+
+    for (let x = 0; x < 30; x++) {
+        const state = await paymentChannel.getChannelState(tonClient)
+        if (state === PaymentChannel.STATE_UNINITED) {
+            return;
+        }
+        await sleep(1000)
+    }
+}

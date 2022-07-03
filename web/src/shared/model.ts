@@ -37,6 +37,20 @@ export interface InitChannelResponse {
   success: true;
 }
 
+export interface CloseChannelRequest {
+  channelId: string;
+}
+
+export interface CloseChannelResponse {
+  state: {
+    balanceA: string;
+    balanceB: string;
+    seqnoA: string;
+    seqnoB: string;
+  }
+  signature: string;
+}
+
 export interface RequestContentRequest {
   channelId: string;
   postCount: number;

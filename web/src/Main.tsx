@@ -12,6 +12,7 @@ import {RequestContentPlain, SharePlain} from './App';
 import Footer from './Footer';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import {fromNano} from "ton";
+import {closePaymentChannel} from "./shared/ton/payments/PaymentChannelUtils";
 
 
 
@@ -37,6 +38,7 @@ function Main(params: {
     <header className={styles.header}>
       <img src="/BannerLogoSmall.png" className={styles.bannerLogo} />
       <p style={{color: 'black', fontSize: '15px'}}>{`PaymentChannel balance: ${fromNano(params.paymentChannel.channelState.balanceA)} TON`}</p>
+      <p style={{color: 'black', fontSize: '15px', cursor: 'pointer'}} onClick={async () => {await closePaymentChannel(params.paymentChannel)}}>close channel</p>
       <nav className={styles.nav}>
         <NavLink to='/feed' title='Feed' />
         <NavLink to='/share' title='Share' />
