@@ -87,12 +87,18 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
     const myKeyPair = await mnemonicToWalletKey(await mnemonicNew(24));
     const channelService = await createChannel(wallet.address, myKeyPair.publicKey);
     console.log(myKeyPair, channelService)
+    const { balance } = await tonClient.getContractState(Address.parse(wallet.address));
+    const initAmount = toNano(amount);
+    if (balance.sub(toNano(0.05)).lt(initAmount)) {
+        alert("Insufficient balance")
+        throw Error("Insufficient balance")
+    }
     const channelConfig = {
         isA: true,
         channelId: channelService.channelId,
         myKeyPair,
         hisPublicKey: channelService.publicKey,
-        initBalanceA: toNano(amount),
+        initBalanceA: initAmount,
         initBalanceB: new BN(0),
         addressA: Address.parse(wallet.address),
         addressB: Address.parse(channelService.address),
