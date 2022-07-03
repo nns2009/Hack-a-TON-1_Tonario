@@ -56,7 +56,7 @@ function Welcome(
         <StakeButton amount={10} stakeCompleted={stakeCompleted} />
       </ButtonGroup>
 
-      <p>You'll need to wait for about 15 seconds for payment channel open transaction to proceed. It will take you to the next page automatically.</p>
+      <p>You'll need to wait for about 15 seconds after signing the transaction for payment channel to open. It will take you to the next page automatically.</p>
     </div>
 
     <Footer />

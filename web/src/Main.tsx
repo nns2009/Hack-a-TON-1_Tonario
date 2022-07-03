@@ -26,7 +26,7 @@ function RedirectToFeed() {
 
 
 const NavLink = (params: { to: string, title: string }) =>
-  <Link to={params.to} className={styles.navLink}>{params.title}</Link>
+  <Link to={params.to} className={styles.navAction}>{params.title}</Link>
 
 
 function Main(params: {
@@ -38,12 +38,19 @@ function Main(params: {
   return <div className={styles.page}>
     <header className={styles.header}>
       <img src="/BannerLogoSmall.png" className={styles.bannerLogo} />
-      <p style={{color: 'black', fontSize: '15px'}}>{`PaymentChannel balance: ${fromNano(params.paymentChannel.channelState.balanceA)} TON`}</p>
-      <p style={{color: 'black', fontSize: '15px', cursor: 'pointer'}} onClick={async () => {await closePaymentChannel(params.paymentChannel)}}>close channel</p>
+      <div className={styles.navInfo} title='Balance available in your payment channel'>
+        {fromNano(params.paymentChannel.channelState.balanceA)} TON
+      </div>
       <nav className={styles.nav}>
         <NavLink to='/feed' title='Feed' />
         <NavLink to='/share' title='Share' />
         <NavLink to='/about' title='About' />
+        <div className={styles.navAction}
+          title="Close payment channel and unlog from the website"
+          onClick={ async () => {await closePaymentChannel(params.paymentChannel)} }
+        >
+          Leave
+        </div>
       </nav>
     </header>
 

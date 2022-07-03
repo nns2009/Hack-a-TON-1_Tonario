@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: space-between;
   font-size: calc(10px + 2vmin);
-  color: white;
+  //color: white;
   border-bottom: solid 1px gray;
 }
 
@@ -26,17 +26,18 @@
   //height: 30px;
   //transform: translateZ(0);
 }
-
 .nav {
   //align-self: flex-end;
   // border-top: solid 1px gray;
   // border-bottom: solid 1px gray;
 }
 
-.navLink {
+.navAction {
   display: inline-block;
   padding: 16px;
 
+  cursor: pointer;
+  user-select: none;
   color: #222;
   text-decoration: none;
 
@@ -47,5 +48,10 @@
     color: white;
     background-color: #35ace0;
   }
+}
+
+.navInfo {
+  color: 'black';
+  font-size: 18px;
 }
 

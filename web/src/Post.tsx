@@ -42,13 +42,13 @@ return <>
       {imageUrl && <img src={imageUrl} className={styles.image} />}
       <div className={styles.imageTitle}>{title}</div>
       <div className={styles.reactionsContainer}>
-        <Reaction emoji='👍' label='Like'
+        <Reaction emoji='👍' label='Like (0.01 TON)'
           count={reactions.like ?? 0}
           onClick={() => react && react(id, 'like')} />
-        <Reaction emoji='🔥' label='Fire'
+        <Reaction emoji='🔥' label='Fire (0.1 TON)'
           count={reactions.fire ?? 0}
           onClick={() => react && react(id, 'fire')} />
-        <Reaction emoji='💎' label='Brilliant'
+        <Reaction emoji='💎' label='Brilliant (1 TON)'
           count={reactions.brilliant ?? 0}
           onClick={() => react && react(id, 'brilliant')}  />
       </div>
