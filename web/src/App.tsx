@@ -81,7 +81,7 @@ function App() {
       {
         !paymentChannel
         ? <Welcome stakeCompleted={updatePaymentChannel} />
-        : <Main share={share} requestContent={requestContent} />
+        : <Main paymentChannel={paymentChannel} share={share} requestContent={requestContent} />
       }
     </div>
   );

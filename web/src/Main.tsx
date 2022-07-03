@@ -10,6 +10,8 @@ import API from './API';
 import ShareSuccess from './ShareSuccess';
 import { RequestContentPlain } from './App';
 import Footer from './Footer';
+import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
+import {fromNano} from "ton";
 
 
 
@@ -27,12 +29,14 @@ const NavLink = (params: { to: string, title: string }) =>
 
 
 function Main(params: {
+  paymentChannel: PaymentChannel,
   share: typeof API.createPost,
   requestContent: RequestContentPlain,
 }) {
   return <div className={styles.page}>
     <header className={styles.header}>
       <img src="/BannerLogoSmall.png" className={styles.bannerLogo} />
+      <p style={{color: 'black', fontSize: '15px'}}>{`PaymentChannel balance: ${fromNano(params.paymentChannel.channelState.balanceA)} TON`}</p>
       <nav className={styles.nav}>
         <NavLink to='/feed' title='Feed' />
         <NavLink to='/share' title='Share' />
@@ -50,7 +54,7 @@ function Main(params: {
     </Routes>
 
     <Footer />
-  </div> 
+  </div>
 }
 
 export default Main;
