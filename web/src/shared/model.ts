@@ -54,18 +54,23 @@ export interface RequestContentResponse {
  * Note: Endpoint accepts a multipart form with below 2 fields and 1 file "image".
  */
 export interface CreatePostRequest {
-  // !!! signature: string;
+  channelId: string
+  newChannelState: string;
+  signature: string;
   title: string;
   text: string;
 }
 
 export type CreatePostResponse = PostInfo;
 
+export type reactType = ("like" | "fire" | "diamond");
+
 export interface ReactRequest {
-  channelId: string;
+  channelId: string
+  newChannelState: string;
   signature: string;
   postId: string;
-  reactionType: string;
+  reactionType: reactType;
 }
 
 export interface ReactResponse {

@@ -3,7 +3,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { Filter, MongoClient, ObjectId, WithId } from 'mongodb';
 import { fromPairs, groupBy, mapValues, omit, values } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
-import { PostInfo } from '../../web/src/shared/model';
+import {PostInfo, reactType} from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
 import PRICES from '../../web/src/shared/PRICES'
 import { hexToBuffer } from '../../web/src/shared/ton/utils'
@@ -396,9 +396,19 @@ async function run() {
     '/create-post',
     upload.single('image'),
     async (req, res, next) => {
-      const { title, text } = req.body;
+      const {
+        channelId,
+        newChannelState,
+        signature,
+        title,
+        text
+      } = req.body;
 
       try {
+        const channel = await getChannel(channelId);
+
+        await checkSign(channelId, channel, newChannelState, signature, PRICES.CREATE);
+
         const { key: imageKey } = req.file as any;
         const imageId = imageKey.replace(/^images\//, '');
 
@@ -454,6 +464,7 @@ async function run() {
     async (req, res, next) => {
       const {
         channelId,
+        newChannelState,
         signature,
         postId,
         reactionType,
@@ -462,7 +473,7 @@ async function run() {
       try {
         const channel = await getChannel(channelId);
 
-        // TODO: Verify if request is signed.
+        await checkSign(channelId, channel, newChannelState, signature, PRICES.REACT[reactionType as reactType]);
 
         const reaction: Reaction = {
           wallet: channel.clientAddress,
