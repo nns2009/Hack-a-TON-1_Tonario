@@ -142,6 +142,33 @@ async function run() {
     },
   );
 
+  app.get(
+    '/channels/:channelId',
+    async (req, res, next) => {
+      const { channelId } = req.params;
+
+      try {
+        const channel = await channelCollection.findOne({
+          _id: new ObjectId(channelId),
+        });
+
+        if (!channel) {
+          res
+            .status(404)
+            .json({ error: 'Channel does not exist.' });
+          return;
+        }
+
+        res.json({
+          channelId,
+          ...omit(channel, '_id'),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  )
+
   app.post(
     '/init-channel',
     async (req, res, next) => {
