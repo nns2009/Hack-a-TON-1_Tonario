@@ -8,6 +8,7 @@ export type PostInfo = {
   videoUrl: string | null,
   createdAt: string,
   reactions: Record<string, number>;
+  views: number;
 }
 
 export interface CreateChannelRequest {

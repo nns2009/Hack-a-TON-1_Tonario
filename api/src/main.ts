@@ -54,6 +54,7 @@ interface Post {
   imageId: string | null;
   videoId: string | null;
   createdAt: string;
+  views: number;
 }
 
 interface Reaction {
@@ -102,11 +103,11 @@ async function run() {
 
   const checkSign = async (channelId: string, channel: any, newChannelState: string, sign: string, sum: BN, send?: true) => {
     const channelState = {
-          balanceA: new BN(channel.clientCurrentBalance, 10),
-          balanceB: new BN(channel.serviceCurrentBalance, 10),
-          seqnoA: new BN(channel.clientSeqNo, 10),
-          seqnoB: new BN(channel.serviceSeqNo, 10),
-        };
+      balanceA: new BN(channel.clientCurrentBalance, 10),
+      balanceB: new BN(channel.serviceCurrentBalance, 10),
+      seqnoA: new BN(channel.clientSeqNo, 10),
+      seqnoB: new BN(channel.serviceSeqNo, 10),
+    };
 
     const paymentChannel = PaymentChannel.create({
       isA: false,
@@ -354,11 +355,21 @@ async function run() {
 
         if (posts.length === 0) {
           posts = await postCollection
-          .find({}, { limit: postCount })
-          .toArray();
+            .find({}, { limit: postCount })
+            .toArray();
         }
 
-        const reactions = await getReactions(posts.map(post => post._id.toString()));
+        const postIds = posts.map(post => post._id);
+
+        await postCollection.updateMany({
+          _id: {
+            $in: postIds,
+          },
+        }, {
+          $inc: { views: 1 },
+        })
+
+        const reactions = await getReactions(postIds.map(postId => postId.toString()));
 
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
@@ -369,6 +380,7 @@ async function run() {
             videoUrl: null,
             createdAt: post.createdAt,
             reactions: reactions[post._id.toString()] ?? {},
+            views: (post.views ?? 0) + 1,
           })),
           next: posts.length > 0
             ? posts[posts.length - 1]._id.toString()
@@ -396,6 +408,7 @@ async function run() {
           imageId,
           videoId: null,
           createdAt: new Date().toISOString(),
+          views: 0,
         };
 
         const { insertedId: postId } = await postCollection.insertOne(post);
