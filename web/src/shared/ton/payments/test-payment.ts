@@ -9,7 +9,6 @@ import BN from 'bn.js';
 import { keyPairFromSeed, mnemonicToWalletKey } from 'ton-crypto';
 import { Buffer } from 'buffer';
 import { PaymentChannel } from './PaymentChannel';
-import { createTopUpBalance } from './PaymentUtils';
 
 const createWallet = (
     client: TonClient,
@@ -115,7 +114,7 @@ const init = async () => {
     };
 
     // Each on their side creates a payment channel object with this configuration
-    const channelA = PaymentChannel.create(testClient, {
+    const channelA = PaymentChannel.create({
         ...channelConfig,
         isA: true,
         myKeyPair: keyPairA,
@@ -125,7 +124,7 @@ const init = async () => {
     const channelAddress = channelA.address; // address of this payment channel smart-contract in blockchain
     console.log('channelAddress=', channelAddress.toFriendly());
 
-    const channelB = PaymentChannel.create(testClient, {
+    const channelB = PaymentChannel.create({
         ...channelConfig,
         isA: false,
         myKeyPair: keyPairB,
@@ -148,8 +147,8 @@ const init = async () => {
     // To check you can use blockchain explorer https://testnet.tonscan.org/address/<CHANNEL_ADDRESS>
     // We can also call get methods on the channel (it's free) to get its current data.
 
-    console.log(await channelA.getChannelState());
-    const data = await channelA.getData();
+    console.log(await channelA.getChannelState(testClient));
+    const data = await channelA.getData(testClient);
     console.log('balanceA = ', data.balanceA.toString());
     console.log('balanceB = ', data.balanceB.toString());
 

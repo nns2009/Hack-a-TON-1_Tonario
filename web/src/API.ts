@@ -1,7 +1,13 @@
-import { PostInfo } from "./shared/model";
+import {
+  CreateChannelRequest,
+  CreateChannelResponse,
+  InitChannelRequest,
+  InitChannelResponse,
+  PostInfo
+} from "./shared/model";
 
 
-const baseUrl = 'http://localhost:3200/';
+export const baseUrl = 'http://localhost:3200/';
 
 async function request<T>(method: string, params: object): Promise<T> {
   const resp = await fetch(baseUrl + method, {
@@ -23,10 +29,21 @@ async function request<T>(method: string, params: object): Promise<T> {
 const requestContent = (postCount: number) =>
   request<PostInfo[]>('request-content', { postCount });
 
+
+const createChannel = (params: CreateChannelRequest) =>
+    request<CreateChannelResponse>('create-channel', params);
+
+
+const initChannel = (params: InitChannelRequest) =>
+    request<InitChannelResponse>('init-channel', params);
+
+
 export default {
   // react,
   // createChannel,
   // initChannel,
   // createPost,
   requestContent,
+  createChannel,
+  initChannel,
 };

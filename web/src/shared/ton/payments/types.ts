@@ -5,3 +5,10 @@ export type ClosingConfig = {
     misbehaviorFine: number | BN,
     conditionalCloseDuration: number | BN
 };
+
+export type ChannelState = {
+    balanceA: BN,
+    balanceB: BN,
+    seqnoA: BN,
+    seqnoB: BN
+}
