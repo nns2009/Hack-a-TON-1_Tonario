@@ -128,7 +128,7 @@ async function run() {
         .json({ error: 'Invalid signature' });
     }
 
-    const checkBalance = send ? _newChannelState.balanceB.eq(channelState.balanceB.sub(sum)) : _newChannelState.balanceB.eq(channelState.balanceB.add(sum));
+    const checkBalance = send ? _newChannelState.balanceB.eq(channelState.balanceB.sub(sum)) : _newChannelState.balanceB.gte(channelState.balanceB.add(sum));
 
     if (!checkBalance) {
       return res
@@ -301,7 +301,7 @@ async function run() {
       try {
         const channel = await getChannel(channelId);
 
-        const sum = PRICES.VIEW.mul(new BN(postCount * 2))
+        const sum = PRICES.VIEW.mul(new BN(postCount))
 
         await checkSign(channelId, channel, res, newChannelState, signature, sum);
 
@@ -311,9 +311,15 @@ async function run() {
           }
           : {};
 
-        const posts = await postCollection
+        let posts = await postCollection
           .find(postsFilter, { limit: postCount })
           .toArray();
+
+        if (posts.length === 0) {
+          posts = await postCollection
+          .find({}, { limit: postCount })
+          .toArray();
+        }
 
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
