@@ -8,7 +8,7 @@ import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel
 import PRICES from '../../web/src/shared/PRICES'
 import { hexToBuffer } from '../../web/src/shared/ton/utils'
 import BN from 'bn.js';
-import {Address, toNano, TonClient} from "ton";
+import { Address, TonClient } from "ton";
 import proxy from 'express-http-proxy';
 import AWS from 'aws-sdk';
 import multer from 'multer';
@@ -38,6 +38,7 @@ const config = {
 interface Channel {
   clientAddress: string;
   clientPublicKey: string;
+  clientInitialBalance: string;
   clientCurrentBalance: string;
   clientSeqNo: string;
   serviceAddress: string;
@@ -118,6 +119,7 @@ async function run() {
       const channel: Channel = {
         clientAddress,
         clientPublicKey,
+        clientInitialBalance: new BN(0).toString(10),
         clientCurrentBalance: new BN(0).toString(10),
         clientSeqNo: new BN(0).toString(10),
         serviceAddress: config.serviceAddress,
@@ -192,6 +194,7 @@ async function run() {
           $set: {
             initialized: true,
             clientCurrentBalance: paymentChannelData.balanceA.toString(10),
+            clientInitialBalance: paymentChannelData.balanceA.toString(10),
           },
         });
 
@@ -225,9 +228,12 @@ async function run() {
         }
 
         const channelState = {
-            balanceA: new BN(channel.clientCurrentBalance, 10), balanceB: new BN(channel.serviceCurrentBalance, 10),
-            seqnoA: new BN(channel.clientSeqNo, 10), seqnoB: new BN(channel.serviceSeqNo, 10)
-          }
+          balanceA: new BN(channel.clientCurrentBalance, 10),
+          balanceB: new BN(channel.serviceCurrentBalance, 10),
+          seqnoA: new BN(channel.clientSeqNo, 10),
+          seqnoB: new BN(channel.serviceSeqNo, 10),
+        };
+
         const paymentChannel = PaymentChannel.create({
           isA: false,
           channelId: new BN(channel._id.toString(), 'hex'),
@@ -235,7 +241,7 @@ async function run() {
           hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
           addressA: Address.parse(channel.clientAddress),
           addressB: Address.parse(config.serviceAddress),
-          initBalanceA: toNano(0.1),
+          initBalanceA: new BN(channel.clientInitialBalance, 10),
           initBalanceB: new BN(0),
           state: channelState
         });
