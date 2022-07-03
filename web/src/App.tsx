@@ -46,7 +46,11 @@ function App() {
 
   function updatePaymentChannel(paymentChannel: PaymentChannel) {
     savePaymentChannel(paymentChannel);
-    setPaymentChannel(paymentChannel);
+    setPaymentChannel(
+      PaymentChannel.fromJSON(
+        paymentChannel.toJSON()
+      )
+    );
   }
 
   async function share(title: string, text: string, image: File | null): Promise<CreatePostResponse> {
