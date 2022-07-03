@@ -5,7 +5,7 @@ import BN from "bn.js";
 import { KeyPair, sign, signVerify } from 'ton-crypto';
 import { Buffer } from 'buffer';
 import { PaymentChannelSource } from './sources/PaymentChannelSource';
-import {ChannelState, ClosingConfig} from './types';
+import {ChannelState, ClosingConfig, PaymentDataJson} from './types';
 import {
     createOneSignature,
     createTwoSignature,
@@ -30,6 +30,22 @@ import {
 import GetMethodParser from '../getMethodParser';
 
 export class PaymentChannel implements Contract {
+    static fromJSON(json: PaymentDataJson) {
+        const isA = json.isA
+        const channelId = new BN(json.channelId, 16)
+        const myKeyPair = {publicKey: Buffer.from(json.myKeyPair.publicKey, 'hex'), secretKey: Buffer.from(json.myKeyPair.secretKey, 'hex')}
+        const hisPublicKey = Buffer.from(json.hisPublicKey, 'hex')
+        const initBalanceA = new BN(json.initBalanceA, 16)
+        const initBalanceB = new BN(json.initBalanceB, 16)
+        const addressA = Address.parse(json.addressA)
+        const addressB = Address.parse(json.addressB)
+        const state = {
+            balanceA: new BN(json.state.balanceA, 16),
+            balanceB: new BN(json.state.balanceB, 16),
+            seqnoA: new BN(json.state.seqnoA, 16),
+            seqnoB: new BN(json.state.seqnoB, 16)}
+        return PaymentChannel.create({isA, channelId, myKeyPair, hisPublicKey, initBalanceA, initBalanceB, addressA, addressB, state})
+    }
     static create(opts: {
         isA: boolean,
         channelId: BN,
@@ -467,5 +483,24 @@ export class PaymentChannel implements Contract {
 
     set channelState(newState) {
         this.pChannelState = newState;
+    }
+
+    toJSON(): PaymentDataJson {
+        return {
+            isA: this.isA,
+            channelId: this.channelId.toString(16), // hex
+            myKeyPair: { publicKey: this.myKeyPair.publicKey.toString('hex'), secretKey: this.myKeyPair.secretKey.toString('hex') },
+            hisPublicKey: this.publicKeyB.toString('hex'),
+            initBalanceA: this.initBalanceA.toString(16),
+            initBalanceB: this.initBalanceB.toString(16),
+            addressA: this.addressA.toFriendly(),
+            addressB: this.addressB.toFriendly(),
+            state: {
+                balanceA: this.channelState.balanceA.toString(16),
+                balanceB: this.channelState.balanceB.toString(16),
+                seqnoA: this.channelState.seqnoA.toString(16),
+                seqnoB: this.channelState.seqnoB.toString(16)
+            }
+        }
     }
 }

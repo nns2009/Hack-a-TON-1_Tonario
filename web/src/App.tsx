@@ -23,15 +23,14 @@ const paymentChannelStorageKey = 'paymentChannel';
 function savePaymentChannel(paymentChannel: PaymentChannel) {
   localStorage.setItem(
     paymentChannelStorageKey,
-    JSON.stringify(paymentChannel),
+    JSON.stringify(paymentChannel.toJSON()),
   );
 }
 function loadPaymentChannel(): PaymentChannel | null {
   const channelString = localStorage.getItem(paymentChannelStorageKey);
   if (!channelString)
     return null;
-
-  return JSON.parse(channelString) as PaymentChannel; // .parse will likely need "transformer" - second parameter
+  return PaymentChannel.fromJSON(JSON.parse(channelString)); // .parse will likely need "transformer" - second parameter
 }
 
 function App() {
