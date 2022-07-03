@@ -86,7 +86,8 @@ function App() {
       throw new Error(`Shouldn't be in this state (without paymentChannel) and still trying to react`);
 
     console.log(`Trying to react to post #${postId} with '${reactionType}'`);
-    const sign = 'asdf'; // !!! fill
+    const sign = await signSendTons(paymentChannel, PRICES.REACT[reactionType]);
+    updatePaymentChannel(paymentChannel);
 
     return await API.react({
       channelId: paymentChannel.channelId.toString(16),
