@@ -50,6 +50,7 @@ export interface RequestContentResponse {
  * Note: Endpoint accepts a multipart form with below 2 fields and 1 file "image".
  */
 export interface CreatePostRequest {
+  // !!! signature: string;
   title: string;
   text: string;
 }

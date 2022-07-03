@@ -1,12 +1,17 @@
 import { useState } from "react";
 
+import styles from './Share.module.scss';
 import Post from "./Post";
-import { Field, LineInput, TextareaInput, Video } from "./UI";
+import { Field, LineInput, SingleButton, TextareaInput, Video } from "./UI";
+import API from "./API";
 
 
 
 
-function Share() {
+function Share(
+  { share } :
+  { share: typeof API.createPost }
+) {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [image, setImage]  = useState<File | null>(null);
@@ -16,11 +21,12 @@ function Share() {
   // const fl: FileList;
   // const j = fl[0]
 
+
   return <div>
-    <Field label="title">
+    <Field label="Title">
       <LineInput value={title} onChange={setTitle} />
     </Field>
-    <Field label="text">
+    <Field label="Text">
       <TextareaInput value={text} onChange={setText} />
     </Field>
     <Field label="Image">
@@ -33,16 +39,21 @@ function Share() {
       <LineInput value={videoUrl} onChange={setVideoUrl} />
     </Field>
 
-    <hr />
-    <h3>Preview</h3>
+    <h2>Preview</h2>
 
     <Post post={{
       id: 'new',
       title, text,
       imageUrl: image ? URL.createObjectURL(image) : null,
       videoUrl,
-      createdAt: '',
+      createdAt: new Date().toISOString(),
     }} />
+
+    <div className={styles.shareButtonContainer}>
+      <SingleButton label="Post"
+        onClick={() => share(title, text, image)}
+      />
+    </div>
   </div>
 }
 

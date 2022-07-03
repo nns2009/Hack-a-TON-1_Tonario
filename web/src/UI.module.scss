@@ -1,9 +1,59 @@
 
+$fontFamily: Calibri, 'Gill Sans', 'Gill Sans MT', 'Trebuchet MS', sans-serif;
+$borderColor: #1084b3; // #37aee1;
+
+
+.buttonGroup {
+  display: inline-block;
+  overflow: hidden;
+  border: solid 1px $borderColor;
+  border-radius: 6px;
+}
+
+.button {
+  padding: 12px;
+  font-family: 'Calibri';
+  font-size: 22px;
+
+  color: white;
+  
+  //text-shadow: #032b3c 0px 0px 1px;
+  background: linear-gradient(#6dcbf3, #3eb2e4);
+  cursor: pointer;
+
+  border: none;
+  &:not(:first-child) {
+    border-left: solid 1px $borderColor;
+  }
+  background-size:1px 43px; 
+  transition: background-position 0.1s, color 0.2s;
+  &:hover {
+    color: #032b3c;
+    //background: linear-gradient(#37aee2, #1e96c8);
+    background-position:100px;  
+  }
+}
+
+
+
+.lineInput {
+  width: 100%;
+  padding: 10px;
+  font-family: $fontFamily;
+  font-size: x-large;
+}
+
 .textarea {
   width: 100%;
+  min-height: 100px;
   resize: vertical;
+  padding: 10px;
+  font-family: $fontFamily;
+  font-size: large;
+
 }
 
 .fieldLabel {
-  font-size: large;
+  margin-top: 12px;
+  font-size: 20px;
 }

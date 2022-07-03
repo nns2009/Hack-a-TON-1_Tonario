@@ -1,7 +1,7 @@
 import { PostInfo } from "./shared/model";
 
 
-const baseUrl = 'http://localhost:3200/';
+const baseUrl = 'https://api.onlygrams.io/'; // 'http://localhost:3200/';
 
 async function request<T>(method: string, params: object): Promise<T> {
   const resp = await fetch(baseUrl + method, {
@@ -19,14 +19,29 @@ async function request<T>(method: string, params: object): Promise<T> {
 // const react = requester('react');
 // const createChannel = requester('create-channel');
 // const initChannel = requester('init-channel');
-// const createPost = requester('create-post');
 const requestContent = (postCount: number) =>
   request<PostInfo[]>('request-content', { postCount });
+
+async function createPost(title: string, text: string, image: File | null): Promise<PostInfo> {
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('text', text);
+  if (image)
+    formData.append('image', image);
+  //formData.append('testParam', 'testValue');
+
+  const resp = await fetch(baseUrl + 'create-post', {
+    method: 'post',
+    body: formData,
+  });
+  const res = await resp.json();
+  return res as PostInfo;
+}
 
 export default {
   // react,
   // createChannel,
   // initChannel,
-  // createPost,
+  createPost,
   requestContent,
 };

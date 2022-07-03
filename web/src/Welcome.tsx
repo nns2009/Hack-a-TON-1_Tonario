@@ -4,6 +4,7 @@ import styles from './Welcome.module.scss';
 import { StakeCompletedHandler } from "./App";
 import {openPaymentChannel} from "./shared/ton/payments/PaymentChannelUtils";
 import {tonWalletAdapter} from "./shared/ton/ton-wallet/TonWalletWalletAdapter";
+import { Button, ButtonGroup } from "./UI";
 
 async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
   console.log(`"Staking" ${amount} TONs`); // not Nano-TONs
@@ -22,10 +23,8 @@ const StakeButton = (
   amount: number,
   stakeCompleted: StakeCompletedHandler,
 }) =>
-  <button className={styles.stakeButton}
-    onClick={() => stake(amount, stakeCompleted)}>
-      {amount} TON
-  </button>;
+  <Button label={amount + ' TON'}
+    onClick={() => stake(amount, stakeCompleted)} />
 
 
 function Welcome(
@@ -47,16 +46,14 @@ function Welcome(
         Stake some TON and begin!
       </p>
 
-      <div className={styles.stakeButtonGroup}>
+      <ButtonGroup>
         <StakeButton amount={0.1} stakeCompleted={stakeCompleted} />
         {/* !!! Remove ^ */}
         <StakeButton amount={1} stakeCompleted={stakeCompleted} />
         <StakeButton amount={2} stakeCompleted={stakeCompleted} />
         <StakeButton amount={5} stakeCompleted={stakeCompleted} />
         <StakeButton amount={10} stakeCompleted={stakeCompleted} />
-
-      </div>
-
+      </ButtonGroup>
     </div>
 
   </div>;

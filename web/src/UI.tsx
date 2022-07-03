@@ -1,6 +1,35 @@
 import styles from './UI.module.scss';
 
 
+export const Button = (
+  { label, onClick } :
+  {
+    label: string,
+    onClick: () => void,
+  },
+) => <button className={styles.button}
+  onClick={onClick}
+>
+  {label}
+</button>;
+
+export const ButtonGroup = (
+  { children } : { children: React.ReactNode },
+) => <div className={styles.buttonGroup}>
+  {children}
+</div>
+
+export const SingleButton = (
+  { label, onClick } :
+  {
+    label: string,
+    onClick: () => void,
+  },
+) => <ButtonGroup>
+  <Button label={label} onClick={onClick} />
+</ButtonGroup>;
+
+
 export const LineInput = (
   { value, onChange } :
   {
@@ -8,7 +37,7 @@ export const LineInput = (
     onChange: (newValue:string) => void
   }
 ) =>
-  <input type="text"
+  <input type="text" className={styles.lineInput}
     value={value}
     onChange={e => onChange(e.target.value)} />;
 

@@ -4,6 +4,32 @@
   height: 100%;
 }
 
+.statusCover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: opacity Common.$transitionDuration;
+}
+.pending {
+  @extend .statusCover;
+  background-color: black;
+  opacity: 0.5;
+  //backdrop-filter: blur(5px);
+  pointer-events: auto;
+}
+.active {
+  @extend .statusCover;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .page {
   padding-left: 24px;
   padding-right: 24px;
