@@ -390,21 +390,20 @@ async function run() {
 
         const postsFilter: Filter<Post> = cursor
           ? {
-            _id: { $gt: new ObjectId(cursor) }
+            _id: { $lte: new ObjectId(cursor) }
           }
           : {};
 
-        let posts = await postCollection
-          .find(postsFilter, { limit: postCount })
+        const posts = await postCollection
+          .find(postsFilter, {
+            limit: postCount + 1,
+            sort: {
+              '_id': -1,
+            },
+          })
           .toArray();
 
-        if (posts.length === 0) {
-          posts = await postCollection
-            .find({}, { limit: postCount })
-            .toArray();
-        }
-
-        const postIds = posts.map(post => post._id);
+        const postIds = posts.slice(0, postCount).map(post => post._id);
 
         await postCollection.updateMany({
           _id: {
@@ -417,7 +416,7 @@ async function run() {
         const reactions = await getReactions(postIds.map(postId => postId.toString()));
 
         res.json({
-          posts: posts.map((post: WithId<Post>): PostInfo => ({
+          posts: posts.slice(0, postCount).map((post: WithId<Post>): PostInfo => ({
             id: post._id.toString(),
             author: post.author,
             title: post.title,
@@ -428,8 +427,8 @@ async function run() {
             reactions: reactions[post._id.toString()] ?? {},
             views: (post.views ?? 0) + 1,
           })),
-          next: posts.length > 0
-            ? posts[posts.length - 1]._id.toString()
+          next: posts.length > postCount
+            ? posts[postCount]._id.toString()
             : null,
         });
       } catch (error) {
