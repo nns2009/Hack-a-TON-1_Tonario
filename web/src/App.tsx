@@ -10,6 +10,9 @@ import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import API from './API';
 import { useNavigate } from 'react-router-dom';
 import { RequestContentResponse } from './shared/model';
+import {signSendTons} from "./shared/ton/payments/PaymentChannelUtils";
+import PRICES from "./shared/PRICES";
+import BN from "bn.js";
 
 
 export type StakeCompletedHandler = (paymentChannel: PaymentChannel) => void;
@@ -27,7 +30,7 @@ function loadPaymentChannel(): PaymentChannel | null {
   const channelString = localStorage.getItem(paymentChannelStorageKey);
   if (!channelString)
     return null;
-  
+
   return JSON.parse(channelString) as PaymentChannel; // .parse will likely need "transformer" - second parameter
 }
 
@@ -58,9 +61,12 @@ function App() {
     if (!paymentChannel)
       throw new Error(`Shouldn't be in this state (without paymentChannel) and still requesting new content`);
 
+    const sign = await signSendTons(paymentChannel, PRICES.VIEW.mul(new BN(postCount)));
+    updatePaymentChannel(paymentChannel);
     return await API.requestContent({
-      channelId: paymentChannel.channelId.toString(),
-      signature: 'muha', // !!!!
+      channelId: paymentChannel.channelId.toString(16),
+      signature: sign,
+      newChannelState: JSON.stringify(paymentChannel.channelState),
       postCount,
       cursor,
     });

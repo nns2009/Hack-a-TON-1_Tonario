@@ -5,6 +5,7 @@ import { omit } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
 import { PostInfo } from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
+import PRICES from '../../web/src/shared/PRICES'
 import BN from 'bn.js';
 import { Address, TonClient } from "ton";
 import proxy from 'express-http-proxy';
@@ -205,7 +206,7 @@ async function run() {
       const {
         channelId,
         postCount,
-        channelState,
+        newChannelState,
         signature,
         cursor,
       } = req.body;
@@ -221,8 +222,35 @@ async function run() {
             .json({ error: 'Channel does not exist.' });
         }
 
-        // TODO: Verify signature.
-        // ...
+        const channelState = {
+            balanceA: new BN(channel.clientCurrentBalance, 10), balanceB: new BN(channel.serviceCurrentBalance, 10),
+            seqnoA: new BN(channel.clientSeqNo, 10), seqnoB: new BN(channel.serviceSeqNo, 10)
+          }
+        const paymentChannel = PaymentChannel.create({
+          isA: false,
+          channelId: new BN(channel._id.toString(), 'hex'),
+          myKeyPair: serviceKeyPair,
+          hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
+          addressA: Address.parse(channel.clientAddress),
+          addressB: Address.parse(config.serviceAddress),
+          initBalanceA: new BN(0),
+          initBalanceB: new BN(0),
+          state: channelState
+        });
+
+        const _newChannelState = JSON.parse(newChannelState);
+
+        if (!(await paymentChannel.verifyState(_newChannelState, signature))) {
+          return res
+            .status(400)
+            .json({ error: 'Invalid signature' });
+        }
+
+        if (!_newChannelState.balanceB.eq(channelState.balanceB.add(PRICES.VIEW.mul(new BN(postCount))))) {
+          return res
+            .status(400)
+            .json({ error: 'Invalid balance' });
+        }
 
         const posts = await postCollection
           .find(
@@ -230,6 +258,17 @@ async function run() {
             { limit: postCount },
           )
           .toArray();
+
+        await channelCollection.updateOne({
+          _id: new ObjectId(channelId),
+        }, {
+          $set: {
+            clientCurrentBalance: _newChannelState.balanceA.toString(10),
+            serviceCurrentBalance: _newChannelState.balanceB.toString(10),
+            clientSeqNo: _newChannelState.seqnoA.toString(10),
+            serviceSeqNo: _newChannelState.seqnoB.toString(10),
+          },
+        });
 
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({

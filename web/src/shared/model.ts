@@ -1,3 +1,5 @@
+import {ChannelState} from "./ton/payments/types";
+
 export type PostInfo = {
   id: string,
   title: string,
@@ -38,6 +40,7 @@ export interface RequestContentRequest {
   channelId: string;
   postCount: number;
   signature: string;
+  newChannelState: string;
   cursor?: string;
 }
 
