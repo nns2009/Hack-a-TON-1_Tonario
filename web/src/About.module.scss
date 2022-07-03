@@ -1,4 +1,19 @@
 
 .credits {
   display: flex;
+  gap: 10px;
+}
+
+@media screen and (max-width: 620px) {
+  .credits {
+    flex-direction: column;
+  }
+}
+
+.pair {
+  margin-bottom: 20px;
+}
+
+.question {
+  font-weight: bold;
 }

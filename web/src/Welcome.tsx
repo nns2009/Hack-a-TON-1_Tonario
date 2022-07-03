@@ -5,6 +5,7 @@ import { StakeCompletedHandler } from "./App";
 import {openPaymentChannel} from "./shared/ton/payments/PaymentChannelUtils";
 import {tonWalletAdapter} from "./shared/ton/ton-wallet/TonWalletWalletAdapter";
 import { Button, ButtonGroup } from "./UI";
+import Footer from "./Footer";
 
 async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
   console.log(`"Staking" ${amount} TONs`); // not Nano-TONs
@@ -56,6 +57,7 @@ function Welcome(
       </ButtonGroup>
     </div>
 
+    <Footer />
   </div>;
 }
 

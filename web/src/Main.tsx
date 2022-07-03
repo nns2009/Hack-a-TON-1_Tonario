@@ -9,6 +9,7 @@ import Share from './Share';
 import API from './API';
 import ShareSuccess from './ShareSuccess';
 import { RequestContentPlain } from './App';
+import Footer from './Footer';
 
 
 
@@ -29,7 +30,7 @@ function Main(params: {
   share: typeof API.createPost,
   requestContent: RequestContentPlain,
 }) {
-  return <div>
+  return <div className={styles.page}>
     <header className={styles.header}>
       <img src="/BannerLogoSmall.png" className={styles.bannerLogo} />
       <nav className={styles.nav}>
@@ -47,6 +48,8 @@ function Main(params: {
       <Route path="about" element={<About />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+
+    <Footer />
   </div> 
 }
 
