@@ -2,6 +2,7 @@ import {ChannelState} from "./ton/payments/types";
 
 export type PostInfo = {
   id: string,
+  author: string,
   title: string,
   text: string,
   imageUrl: string | null,

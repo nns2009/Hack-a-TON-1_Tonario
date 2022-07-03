@@ -51,6 +51,7 @@ interface Channel {
 interface Post {
   title: string;
   text: string;
+  author: string;
   imageId: string | null;
   videoId: string | null;
   createdAt: string;
@@ -457,6 +458,7 @@ async function run() {
         const imageId = imageKey.replace(/^images\//, '');
 
         const post: Post = {
+          author: channel.clientAddress,
           title,
           text,
           imageId,

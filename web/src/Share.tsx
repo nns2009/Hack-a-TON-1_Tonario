@@ -44,6 +44,7 @@ function Share(
 
     <Post post={{
       id: 'new',
+      author: '',
       title, text,
       imageUrl: image ? URL.createObjectURL(image) : null,
       videoUrl,
