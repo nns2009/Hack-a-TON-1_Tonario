@@ -9,7 +9,7 @@ const DIAMOND = toNano(1);
 const REACT = {
     like: LIKE,
     fire: FIRE,
-    diamond: DIAMOND
+    brilliant: DIAMOND
 }
 
 export default {
