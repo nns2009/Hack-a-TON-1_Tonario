@@ -419,6 +419,7 @@ async function run() {
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
             id: post._id.toString(),
+            author: post.author,
             title: post.title,
             text: post.text,
             imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
