@@ -64,7 +64,7 @@ export interface ReactRequest {
   channelId: string;
   signature: string;
   postId: string;
-  reactionType: string;
+  reactionType: 'like' | 'fire' | 'brilliant';
 }
 
 export interface ReactResponse {
