@@ -11,7 +11,7 @@ function Feed() {
 
   async function loadPosts() {
     const nextPosts = await API.requestContent(4);
-    setPosts(nextPosts);
+    if (!('error' in nextPosts)) setPosts(nextPosts);
   }
 
   useEffect(() => { loadPosts(); }, []);
