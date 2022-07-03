@@ -1,10 +1,12 @@
 @use 'Common.module.scss';
 
 .page {
+  position: relative;
   margin: auto;
   padding-left: 24px;
   padding-right: 24px;
   max-width: 800px;
+  min-height: 100vh;
 }
 
 .header {
