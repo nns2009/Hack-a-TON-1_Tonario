@@ -4,13 +4,14 @@ import styles from './Share.module.scss';
 import Post from "./Post";
 import { Field, LineInput, SingleButton, TextareaInput, Video } from "./UI";
 import API from "./API";
+import {SharePlain} from "./App";
 
 
 
 
 function Share(
   { share } :
-  { share: typeof API.createPost }
+  { share: SharePlain }
 ) {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');

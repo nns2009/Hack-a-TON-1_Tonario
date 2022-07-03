@@ -59,6 +59,7 @@ export interface CreatePostRequest {
   signature: string;
   title: string;
   text: string;
+  image: File | null;
 }
 
 export type CreatePostResponse = PostInfo;
