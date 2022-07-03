@@ -107,7 +107,7 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
 
     const openChannelBody = await getOpenChannelBody(wallet, channel);
 
-    await tonWalletAdapter.createSession();
+    await tonWalletAdapter.awaitReadiness();
     await tonWalletAdapter.requestCustomTransfer(openChannelBody);
 
     const sleep = (m: any) => new Promise(r => setTimeout(r, m))
