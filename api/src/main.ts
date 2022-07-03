@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import { Filter, MongoClient, ObjectId, WithId } from 'mongodb';
-import { omit } from 'lodash';
+import { fromPairs, groupBy, mapValues, omit, values } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
 import { PostInfo } from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
@@ -65,6 +65,9 @@ interface Reaction {
 class NotFoundError extends Error {
 }
 
+class BadRequestError extends Error {
+}
+
 async function run() {
   const app = express();
 
@@ -97,7 +100,7 @@ async function run() {
     Buffer.from(config.serviceSeed, 'hex')
   );
 
-  const checkSign = async (channelId: string, channel: any, res: Response, newChannelState: string, sign: string, sum: BN, send?: true) => {
+  const checkSign = async (channelId: string, channel: any, newChannelState: string, sign: string, sum: BN, send?: true) => {
     const channelState = {
           balanceA: new BN(channel.clientCurrentBalance, 10),
           balanceB: new BN(channel.serviceCurrentBalance, 10),
@@ -123,17 +126,13 @@ async function run() {
     })
 
     if (!(await paymentChannel.verifyState(_newChannelState, hexToBuffer(sign)))) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid signature' });
+      throw new BadRequestError('Invalid signature');
     }
 
     const checkBalance = send ? _newChannelState.balanceB.eq(channelState.balanceB.sub(sum)) : _newChannelState.balanceB.gte(channelState.balanceB.add(sum));
 
     if (!checkBalance) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid balance' });
+      throw new BadRequestError('Invalid balance');
     }
 
     await channelCollection.updateOne({
@@ -167,6 +166,44 @@ async function run() {
     }
 
     return channel;
+  }
+
+  async function getReactions(postIds: string[]) {
+    const pipeline = [
+      {
+        $match: {
+          postId: {
+            $in: postIds,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            postId: '$postId',
+            reactionType: '$reactionType',
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      }, {
+        $project: {
+          postId: '$_id.postId',
+          reactionType: '$_id.reactionType',
+          count: '$count',
+        },
+      },
+    ];
+
+    const stats = await reactionCollection.aggregate(pipeline).toArray();
+
+    return mapValues(
+      groupBy(stats, postReactionStat => postReactionStat.postId),
+      (stats, postId) => fromPairs(
+        stats.map(stat => [stat.reactionType, stat.count]),
+      ),
+    );
   }
 
   app.use(
@@ -303,7 +340,7 @@ async function run() {
 
         const sum = PRICES.VIEW.mul(new BN(postCount))
 
-        await checkSign(channelId, channel, res, newChannelState, signature, sum);
+        await checkSign(channelId, channel, newChannelState, signature, sum);
 
         const postsFilter: Filter<Post> = cursor
           ? {
@@ -321,6 +358,8 @@ async function run() {
           .toArray();
         }
 
+        const reactions = await getReactions(posts.map(post => post._id.toString()));
+
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
             id: post._id.toString(),
@@ -329,7 +368,7 @@ async function run() {
             imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
             videoUrl: null,
             createdAt: post.createdAt,
-            reactions: {},
+            reactions: reactions[post._id.toString()] ?? {},
           })),
           next: posts.length > 0
             ? posts[posts.length - 1]._id.toString()
@@ -440,6 +479,12 @@ async function run() {
     if (err instanceof NotFoundError) {
       return res
         .status(404)
+        .json({ error: err.message });
+    }
+
+    if (err instanceof BadRequestError) {
+      return res
+        .status(400)
         .json({ error: err.message });
     }
 
