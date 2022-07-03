@@ -253,6 +253,50 @@ async function run() {
     },
   );
 
+  app.post(
+    '/close-channel',
+    async (req, res, next) => {
+      const { channelId } = req.body;
+
+      try {
+        const channel = await getChannel(channelId);
+
+        const channelState = {
+          balanceA: new BN(channel.clientCurrentBalance, 10),
+          balanceB: new BN(channel.serviceCurrentBalance, 10),
+          seqnoA: new BN(channel.clientSeqNo, 10),
+          seqnoB: new BN(channel.serviceSeqNo, 10),
+        };
+
+        const paymentChannel = PaymentChannel.create({
+          isA: false,
+          channelId: new BN(channel._id.toString(), 'hex'),
+          myKeyPair: serviceKeyPair,
+          hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
+          addressA: Address.parse(channel.clientAddress),
+          addressB: Address.parse(config.serviceAddress),
+          initBalanceA: new BN(channel.clientInitialBalance, 10),
+          initBalanceB: new BN(0),
+          state: channelState
+        });
+
+        const signature = await paymentChannel.signClose(channelState);
+
+        res.json({
+          state: {
+            balanceA: channelState.balanceA.toString('hex'),
+            balanceB: channelState.balanceB.toString('hex'),
+            seqnoA: channelState.seqnoA.toString('hex'),
+            seqnoB: channelState.seqnoB.toString('hex'),
+          },
+          signature: signature.toString('hex'),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   app.get(
     '/channels/:channelId',
     async (req, res, next) => {
