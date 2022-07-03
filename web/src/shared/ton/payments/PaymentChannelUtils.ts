@@ -2,7 +2,7 @@ import {Wallet} from "../ton-wallet/types/Wallet";
 import {PaymentChannel} from "./PaymentChannel";
 import {tonClient} from "../index";
 import BN from "bn.js";
-import {Address, Cell, CellMessage, CommonMessageInfo, StateInit, toNano} from "ton";
+import {Address, Cell, CellMessage, CommonMessageInfo, ExternalMessage, StateInit, toNano} from "ton";
 import {mnemonicToWalletKey, mnemonicNew, KeyPair} from "ton-crypto";
 import {InternalMessage} from "ton";
 import GetMethodParser from "../getMethodParser";
@@ -112,7 +112,7 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
 
     const sleep = (m: any) => new Promise(r => setTimeout(r, m))
 
-    for (let x = 0; x < 30; x++) {
+    for (let x = 0; x < 100; x++) {
         const state = await channel.getChannelState(tonClient)
         if (state === PaymentChannel.STATE_OPEN) {
             await API.initChannel({channelId: channel.channelId.toString(16)});
@@ -165,46 +165,21 @@ export const signReceiveTons = async (channel: PaymentChannel, amount: BN): Prom
 export const closePaymentChannel = async (paymentChannel: PaymentChannel) => {
     const close = await API.closeChannel({channelId: paymentChannel.channelId.toString(16)})
 
-    const closeChannelBody = new Cell();
-
     const closeState = {
         balanceA: new BN(close.state.balanceA, 16), balanceB: new BN(close.state.balanceB, 16),
         seqnoA: new BN(close.state.seqnoA, 16), seqnoB: new BN(close.state.seqnoB, 16)
     }
     const closeBody = await paymentChannel.createCooperativeCloseChannel({...closeState, hisSignature: hexToBuffer(close.signature)}).then((x) => x.cell);
-
     // close
-    const msg1 = new Cell();
-    new InternalMessage({
+    const closeChannelMsg = new ExternalMessage({
         to: paymentChannel.address,
-        value: toNano(0.015),
-        bounce: false,
         body: new CommonMessageInfo({
             stateInit: undefined,
             body: new CellMessage(closeBody),
         })
-    }).writeTo(msg1);
-    const { stack } = await tonClient.callGetMethod(paymentChannel.addressA, 'seqno');
-    const seqno = GetMethodParser.parseStack(stack);
-
-    closeChannelBody.bits.writeUint(698983191,32) // subwalletID
-    closeChannelBody.bits.writeUint(Math.round(Date.now() / 1000) + 60,32) // validUntil
-    closeChannelBody.bits.writeUint(seqno,32) // seqno
-    closeChannelBody.bits.writeUint(3,8);
-    closeChannelBody.refs[0] = msg1;
-
-    await tonWalletAdapter.createSession();
-    await tonWalletAdapter.requestCustomTransfer(closeChannelBody);
-
-    const sleep = (m: any) => new Promise(r => setTimeout(r, m))
-
-    for (let x = 0; x < 30; x++) {
-        const state = await paymentChannel.getChannelState(tonClient)
-        if (state === PaymentChannel.STATE_UNINITED) {
-            localStorage.clear()
-            document.location.reload();
-            return;
-        }
-        await sleep(1000)
-    }
+    })
+    await tonClient.sendMessage(closeChannelMsg);
+    localStorage.clear()
+    document.location.reload();
+    return;
 }
