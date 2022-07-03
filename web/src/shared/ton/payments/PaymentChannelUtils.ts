@@ -2,21 +2,20 @@ import {Wallet} from "../ton-wallet/types/Wallet";
 import {PaymentChannel} from "./PaymentChannel";
 import {tonClient} from "../index";
 import BN from "bn.js";
-import {Address, Cell, CellMessage, CommonMessageInfo, InternalMessage, StateInit, toNano} from "ton";
-import {mnemonicNew, mnemonicToWalletKey} from "ton-crypto";
+import {Address, Cell, CellMessage, CommonMessageInfo, StateInit, toNano} from "ton";
+import {mnemonicToWalletKey, mnemonicNew, KeyPair} from "ton-crypto";
+import {InternalMessage} from "ton";
 import GetMethodParser from "../getMethodParser";
 import {tonWalletAdapter} from "../ton-wallet/TonWalletWalletAdapter";
 import {Buffer} from "buffer";
 import API from "../../../API";
+import {hexToBuffer} from "../utils";
 
 const createChannel = async (clientAddress: string, clientPublicKey: Buffer) => {
-    const hexToBuffer = (hex: string): Buffer => {
-      if (hex.length % 2 !== 0) hex = `0${hex}`;
-      return Buffer.from(hex, 'hex');
-    };
     const {channelId, serviceAddress, servicePublicKey} = await API.createChannel({clientAddress, clientPublicKey: clientPublicKey.toString('hex')});
     return {channelId: new BN(channelId, 16), address: serviceAddress, publicKey: hexToBuffer(servicePublicKey)};
 }
+
 
 
 const getOpenChannelBody = async (wallet: Wallet, channel: PaymentChannel): Promise<Cell> => {
@@ -72,7 +71,7 @@ const getOpenChannelBody = async (wallet: Wallet, channel: PaymentChannel): Prom
 
     openChannelBody.bits.writeUint(698983191,32) // subwalletID
     openChannelBody.bits.writeUint(Math.round(Date.now() / 1000) + 60,32) // validUntil
-    openChannelBody.bits.writeUint(seqno,32); // seqno
+    openChannelBody.bits.writeUint(seqno,32) // seqno
     openChannelBody.bits.writeUint(3,8);
     openChannelBody.bits.writeUint(3,8);
     openChannelBody.bits.writeUint(3,8);
@@ -120,19 +119,19 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
 
 export const signSendTons = async (channel: PaymentChannel, amount: BN): Promise<string> => {
     let channelState = channel.channelState;
-    console.log(channelState);
+    console.log(channelState.balanceA.toNumber(), amount.toNumber());
     if (channel.isA) {
         channelState.seqnoA = channelState.seqnoA.add(new BN(1));
-        if (channelState.balanceA.cmp(amount) === -1) throw Error("Insufficient balance")
+        if (channelState.balanceA.lt(amount)) throw Error("Insufficient balance")
         channelState.balanceA = channelState.balanceA.sub(amount);
         channelState.balanceB = channelState.balanceB.add(amount);
     } else {
         channelState.seqnoB = channelState.seqnoB.add(new BN(1));
-        if (channelState.balanceB.cmp(amount) === -1) throw Error("Insufficient balance")
+        if (channelState.balanceB.lt(amount)) throw Error("Insufficient balance")
         channelState.balanceB = channelState.balanceB.sub(amount);
         channelState.balanceA = channelState.balanceA.add(amount);
     }
-
+    console.log(channelState.balanceA.toNumber(), channelState.balanceB.toNumber(), amount.toNumber());
     channel.channelState = channelState;
     const sign = await channel.signState(channel.channelState);
     return sign.toString('hex');
@@ -142,12 +141,12 @@ export const signReceiveTons = async (channel: PaymentChannel, amount: BN): Prom
     let channelState = channel.channelState;
     if (!channel.isA) {
         channelState.seqnoA = channelState.seqnoA.add(new BN(1));
-        if (channelState.balanceA.cmp(amount) === -1) throw Error("Insufficient balance")
+        if (channelState.balanceA.lt(amount)) throw Error("Insufficient balance")
         channelState.balanceA = channelState.balanceA.sub(amount);
         channelState.balanceB = channelState.balanceB.add(amount);
     } else {
         channelState.seqnoB = channelState.seqnoB.add(new BN(1));
-        if (channelState.balanceB.cmp(amount) === -1) throw Error("Insufficient balance")
+        if (channelState.balanceB.lt(amount)) throw Error("Insufficient balance")
         channelState.balanceB = channelState.balanceB.sub(amount);
         channelState.balanceA = channelState.balanceA.add(amount);
     }

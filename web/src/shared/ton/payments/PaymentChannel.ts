@@ -310,8 +310,6 @@ export class PaymentChannel implements Contract {
                 conditionals: undefined,
             }),
         });
-        const hash = await state.hash();
-        // return nacl.sign.detached.verify(hash, hisSignature, this.options.isA ? this.options.publicKeyB : this.options.publicKeyA);
         return signVerify(
             state.hash(),
             hisSignature,
