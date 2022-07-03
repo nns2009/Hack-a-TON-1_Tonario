@@ -8,7 +8,7 @@ import { Button, ButtonGroup } from "./UI";
 
 async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
   console.log(`"Staking" ${amount} TONs`); // not Nano-TONs
-  stakeCompleted({} as any); return;
+  //stakeCompleted({} as any); return;
   const wallet = await tonWalletAdapter.getWallet();
   const channel = await openPaymentChannel(wallet, amount);
   stakeCompleted(
