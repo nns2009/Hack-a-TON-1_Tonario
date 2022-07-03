@@ -51,6 +51,7 @@ interface Channel {
 interface Post {
   title: string;
   text: string;
+  author: string;
   imageId: string | null;
   videoId: string | null;
   createdAt: string;
@@ -418,6 +419,7 @@ async function run() {
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
             id: post._id.toString(),
+            author: post.author,
             title: post.title,
             text: post.text,
             imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
@@ -457,6 +459,7 @@ async function run() {
         const imageId = imageKey.replace(/^images\//, '');
 
         const post: Post = {
+          author: channel.clientAddress,
           title,
           text,
           imageId,
