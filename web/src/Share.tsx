@@ -47,6 +47,7 @@ function Share(
       imageUrl: image ? URL.createObjectURL(image) : null,
       videoUrl,
       createdAt: new Date().toISOString(),
+      reactions: {"Like": 0}
     }} />
 
     <div className={styles.shareButtonContainer}>
