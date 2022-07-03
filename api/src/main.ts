@@ -1,9 +1,9 @@
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import { Filter, MongoClient, ObjectId, WithId } from 'mongodb';
-import { omit } from 'lodash';
+import { fromPairs, groupBy, mapValues, omit, values } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
-import { PostInfo } from '../../web/src/shared/model';
+import {PostInfo, reactType} from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
 import PRICES from '../../web/src/shared/PRICES'
 import { hexToBuffer } from '../../web/src/shared/ton/utils'
@@ -54,6 +54,7 @@ interface Post {
   imageId: string | null;
   videoId: string | null;
   createdAt: string;
+  views: number;
 }
 
 interface Reaction {
@@ -63,6 +64,9 @@ interface Reaction {
 }
 
 class NotFoundError extends Error {
+}
+
+class BadRequestError extends Error {
 }
 
 async function run() {
@@ -97,13 +101,13 @@ async function run() {
     Buffer.from(config.serviceSeed, 'hex')
   );
 
-  const checkSign = async (channelId: string, channel: any, res: Response, newChannelState: string, sign: string, sum: BN, send?: true) => {
+  const checkSign = async (channelId: string, channel: any, newChannelState: string, sign: string, sum: BN, send?: true) => {
     const channelState = {
-          balanceA: new BN(channel.clientCurrentBalance, 10),
-          balanceB: new BN(channel.serviceCurrentBalance, 10),
-          seqnoA: new BN(channel.clientSeqNo, 10),
-          seqnoB: new BN(channel.serviceSeqNo, 10),
-        };
+      balanceA: new BN(channel.clientCurrentBalance, 10),
+      balanceB: new BN(channel.serviceCurrentBalance, 10),
+      seqnoA: new BN(channel.clientSeqNo, 10),
+      seqnoB: new BN(channel.serviceSeqNo, 10),
+    };
 
     const paymentChannel = PaymentChannel.create({
       isA: false,
@@ -123,17 +127,13 @@ async function run() {
     })
 
     if (!(await paymentChannel.verifyState(_newChannelState, hexToBuffer(sign)))) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid signature' });
+      throw new BadRequestError('Invalid signature');
     }
 
     const checkBalance = send ? _newChannelState.balanceB.eq(channelState.balanceB.sub(sum)) : _newChannelState.balanceB.gte(channelState.balanceB.add(sum));
 
     if (!checkBalance) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid balance' });
+      throw new BadRequestError('Invalid balance');
     }
 
     await channelCollection.updateOne({
@@ -167,6 +167,44 @@ async function run() {
     }
 
     return channel;
+  }
+
+  async function getReactions(postIds: string[]) {
+    const pipeline = [
+      {
+        $match: {
+          postId: {
+            $in: postIds,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            postId: '$postId',
+            reactionType: '$reactionType',
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      }, {
+        $project: {
+          postId: '$_id.postId',
+          reactionType: '$_id.reactionType',
+          count: '$count',
+        },
+      },
+    ];
+
+    const stats = await reactionCollection.aggregate(pipeline).toArray();
+
+    return mapValues(
+      groupBy(stats, postReactionStat => postReactionStat.postId),
+      (stats, postId) => fromPairs(
+        stats.map(stat => [stat.reactionType, stat.count]),
+      ),
+    );
   }
 
   app.use(
@@ -208,6 +246,50 @@ async function run() {
         res.json({
           channelId,
           ...omit(channel, '_id'),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  app.post(
+    '/close-channel',
+    async (req, res, next) => {
+      const { channelId } = req.body;
+
+      try {
+        const channel = await getChannel(channelId);
+
+        const channelState = {
+          balanceA: new BN(channel.clientCurrentBalance, 10),
+          balanceB: new BN(channel.serviceCurrentBalance, 10),
+          seqnoA: new BN(channel.clientSeqNo, 10),
+          seqnoB: new BN(channel.serviceSeqNo, 10),
+        };
+
+        const paymentChannel = PaymentChannel.create({
+          isA: false,
+          channelId: new BN(channel._id.toString(), 'hex'),
+          myKeyPair: serviceKeyPair,
+          hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
+          addressA: Address.parse(channel.clientAddress),
+          addressB: Address.parse(config.serviceAddress),
+          initBalanceA: new BN(channel.clientInitialBalance, 10),
+          initBalanceB: new BN(0),
+          state: channelState
+        });
+
+        const signature = await paymentChannel.signClose(channelState);
+
+        res.json({
+          state: {
+            balanceA: channelState.balanceA.toString('hex'),
+            balanceB: channelState.balanceB.toString('hex'),
+            seqnoA: channelState.seqnoA.toString('hex'),
+            seqnoB: channelState.seqnoB.toString('hex'),
+          },
+          signature: signature.toString('hex'),
         });
       } catch (error) {
         next(error);
@@ -303,7 +385,7 @@ async function run() {
 
         const sum = PRICES.VIEW.mul(new BN(postCount))
 
-        await checkSign(channelId, channel, res, newChannelState, signature, sum);
+        await checkSign(channelId, channel, newChannelState, signature, sum);
 
         const postsFilter: Filter<Post> = cursor
           ? {
@@ -317,9 +399,21 @@ async function run() {
 
         if (posts.length === 0) {
           posts = await postCollection
-          .find({}, { limit: postCount })
-          .toArray();
+            .find({}, { limit: postCount })
+            .toArray();
         }
+
+        const postIds = posts.map(post => post._id);
+
+        await postCollection.updateMany({
+          _id: {
+            $in: postIds,
+          },
+        }, {
+          $inc: { views: 1 },
+        })
+
+        const reactions = await getReactions(postIds.map(postId => postId.toString()));
 
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
@@ -329,7 +423,8 @@ async function run() {
             imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
             videoUrl: null,
             createdAt: post.createdAt,
-            reactions: {},
+            reactions: reactions[post._id.toString()] ?? {},
+            views: (post.views ?? 0) + 1,
           })),
           next: posts.length > 0
             ? posts[posts.length - 1]._id.toString()
@@ -345,9 +440,19 @@ async function run() {
     '/create-post',
     upload.single('image'),
     async (req, res, next) => {
-      const { title, text } = req.body;
+      const {
+        channelId,
+        newChannelState,
+        signature,
+        title,
+        text
+      } = req.body;
 
       try {
+        const channel = await getChannel(channelId);
+
+        await checkSign(channelId, channel, newChannelState, signature, PRICES.CREATE);
+
         const { key: imageKey } = req.file as any;
         const imageId = imageKey.replace(/^images\//, '');
 
@@ -357,6 +462,7 @@ async function run() {
           imageId,
           videoId: null,
           createdAt: new Date().toISOString(),
+          views: 0,
         };
 
         const { insertedId: postId } = await postCollection.insertOne(post);
@@ -402,6 +508,7 @@ async function run() {
     async (req, res, next) => {
       const {
         channelId,
+        newChannelState,
         signature,
         postId,
         reactionType,
@@ -410,7 +517,7 @@ async function run() {
       try {
         const channel = await getChannel(channelId);
 
-        // TODO: Verify if request is signed.
+        await checkSign(channelId, channel, newChannelState, signature, PRICES.REACT[reactionType as reactType]);
 
         const reaction: Reaction = {
           wallet: channel.clientAddress,
@@ -440,6 +547,12 @@ async function run() {
     if (err instanceof NotFoundError) {
       return res
         .status(404)
+        .json({ error: err.message });
+    }
+
+    if (err instanceof BadRequestError) {
+      return res
+        .status(400)
         .json({ error: err.message });
     }
 

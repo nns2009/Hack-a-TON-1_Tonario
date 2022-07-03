@@ -4,13 +4,14 @@ import styles from './Share.module.scss';
 import Post from "./Post";
 import { Field, LineInput, SingleButton, TextareaInput, Video } from "./UI";
 import API from "./API";
+import {SharePlain} from "./App";
 
 
 
 
 function Share(
   { share } :
-  { share: typeof API.createPost }
+  { share: SharePlain }
 ) {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
@@ -47,7 +48,8 @@ function Share(
       imageUrl: image ? URL.createObjectURL(image) : null,
       videoUrl,
       createdAt: new Date().toISOString(),
-      reactions: {"Like": 0}
+      reactions: {},
+      views: 0,
     }} />
 
     <div className={styles.shareButtonContainer}>

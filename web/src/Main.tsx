@@ -8,7 +8,7 @@ import NotFound from './NotFound';
 import Share from './Share';
 import API from './API';
 import ShareSuccess from './ShareSuccess';
-import { RequestContentPlain } from './App';
+import {RequestContentPlain, SharePlain} from './App';
 import Footer from './Footer';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import {fromNano} from "ton";
@@ -30,7 +30,7 @@ const NavLink = (params: { to: string, title: string }) =>
 
 function Main(params: {
   paymentChannel: PaymentChannel,
-  share: typeof API.createPost,
+  share: SharePlain,
   requestContent: RequestContentPlain,
 }) {
   return <div className={styles.page}>

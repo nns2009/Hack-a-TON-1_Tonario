@@ -9,7 +9,7 @@ import Main from './Main';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import API from './API';
 import { useNavigate } from 'react-router-dom';
-import { RequestContentResponse } from './shared/model';
+import {CreatePostResponse, PostInfo, RequestContentResponse} from './shared/model';
 import {signSendTons} from "./shared/ton/payments/PaymentChannelUtils";
 import PRICES from "./shared/PRICES";
 import BN from "bn.js";
@@ -18,6 +18,7 @@ import BN from "bn.js";
 export type StakeCompletedHandler = (paymentChannel: PaymentChannel) => void;
 
 export type RequestContentPlain = (cursor: string | undefined, count: number) => Promise<RequestContentResponse>;
+export type SharePlain = (title: string, text: string, image: File | null) => Promise<CreatePostResponse>;
 
 const paymentChannelStorageKey = 'paymentChannel';
 function savePaymentChannel(paymentChannel: PaymentChannel) {
@@ -44,11 +45,18 @@ function App() {
     setPaymentChannel(paymentChannel);
   }
 
-  async function share(title: string, text: string, image: File | null) {
-    // !!! Add signatures, micro-payment, author info
+  async function share(title: string, text: string, image: File | null): Promise<CreatePostResponse> {
+    if (!paymentChannel)
+      throw new Error(`Shouldn't be in this state (without paymentChannel) and still requesting new content`);
     try {
+      const sign = await signSendTons(paymentChannel, PRICES.CREATE);
       setPending(true);
-      const res = await API.createPost(title, text, image);
+      const res = await API.createPost({
+        channelId: paymentChannel.channelId.toString(16),
+        signature: sign,
+        newChannelState: JSON.stringify(paymentChannel.channelState),
+        title, text, image
+      });
       navigate('share/success');
       return res;
     } finally {

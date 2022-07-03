@@ -1,6 +1,6 @@
 import {
   CreateChannelRequest,
-  CreateChannelResponse,
+  CreateChannelResponse, CreatePostRequest,
   InitChannelRequest,
   InitChannelResponse,
   PostInfo,
@@ -24,12 +24,15 @@ async function request<T>(method: string, params: object): Promise<T> {
 
 
 
-async function createPost(title: string, text: string, image: File | null): Promise<PostInfo> {
+async function createPost(params: CreatePostRequest): Promise<PostInfo> {
   const formData = new FormData();
-  formData.append('title', title);
-  formData.append('text', text);
-  if (image)
-    formData.append('image', image);
+  formData.append('title', params.title);
+  formData.append('text', params.text);
+  formData.append('channelId', params.channelId);
+  formData.append('newChannelState', params.newChannelState);
+  formData.append('signature', params.signature);
+  if (params.image)
+    formData.append('image', params.image);
 
   const resp = await fetch(baseUrl + 'create-post', {
     method: 'post',

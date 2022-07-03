@@ -28,7 +28,7 @@ function Feed(params: {
     else
       localStorage.removeItem(cursorStorageKey);
     setCursor(res.next ?? undefined);
-    
+
     if (!('error' in res))
       setPosts([...posts, ...res.posts]);
   }
@@ -64,7 +64,7 @@ function Feed(params: {
         <div className={styles.postSeparator} />
       </React.Fragment>
     )}
-    <div>End</div>
+    {posts.length === 0 ? (<div>Insufficient balance. Need to open new payment channel.</div>) : (<div>End</div>)}
   </div>
 }
 
