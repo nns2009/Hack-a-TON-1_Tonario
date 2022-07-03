@@ -1,6 +1,7 @@
 
 
 .welcomePage {
+  position: relative;
   height: 100vh;
   display: flex;
   align-items: center;
@@ -19,4 +20,15 @@
   max-width: 500px;
 }
 
+.bannedLogosContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.bannedLogos {
+  margin-bottom: 10px;
+}
 

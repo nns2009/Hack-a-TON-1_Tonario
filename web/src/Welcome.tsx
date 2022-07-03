@@ -56,6 +56,12 @@ function Welcome(
       </ButtonGroup>
     </div>
 
+    <div>
+    <div className={styles.bannedLogosContainer}>
+      <img src="/BannedLogosSmall.png" className={styles.bannedLogos} />
+    </div>
+
+    </div>
   </div>;
 }
 
