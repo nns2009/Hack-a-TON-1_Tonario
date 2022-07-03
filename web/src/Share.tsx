@@ -19,7 +19,6 @@ function Share(
   //const [imageUrl, setImageUrl] = useState('');
   //const [videoUrl, setVideoUrl] = useState('');
 
-
   return <div>
     {/* <Field label="Title">
       <LineInput value={title} onChange={setTitle} />
@@ -48,7 +47,10 @@ function Share(
     <div className={styles.shareButtonContainer}>
       <SingleButton label="Post"
         onClick={() => share(title, text, image)}
+        disabled={!image || !title}
       />
+      {!image && <div>* Select an image</div>}
+      {!title && <div>* Choose a title</div>}
     </div>
   </div>
 }

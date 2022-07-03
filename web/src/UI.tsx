@@ -2,31 +2,38 @@ import styles from './UI.module.scss';
 
 
 export const Button = (
-  { label, onClick } :
+  { label, onClick, disabled } :
   {
     label: string,
     onClick: () => void,
+    disabled?: boolean,
   },
 ) => <button className={styles.button}
   onClick={onClick}
+  disabled={disabled}
 >
   {label}
 </button>;
 
 export const ButtonGroup = (
-  { children } : { children: React.ReactNode },
-) => <div className={styles.buttonGroup}>
+  { children, disabled } :
+  { children: React.ReactNode, disabled?: boolean },
+) => <div
+className={styles.buttonGroup}
+  style={disabled ? { filter: 'grayscale(1)' } : {}}
+>
   {children}
 </div>
 
 export const SingleButton = (
-  { label, onClick } :
+  { label, onClick, disabled } :
   {
     label: string,
     onClick: () => void,
+    disabled?: boolean,
   },
-) => <ButtonGroup>
-  <Button label={label} onClick={onClick} />
+) => <ButtonGroup disabled={disabled}>
+  <Button label={label} onClick={onClick} disabled={disabled} />
 </ButtonGroup>;
 
 
