@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import styles from './Feed.module.scss';
 import Post from './Post';
-import { PostInfo } from './shared/model';
+import { PostInfo, reactType } from './shared/model';
 import { ReactPlain, RequestContentPlain } from './App';
 
 
@@ -55,13 +55,35 @@ function Feed(params: {
   useEffect(() => {
     window.addEventListener('scroll', onScroll);
     return () => { window.removeEventListener('scroll', onScroll); };
-  })
+  });
+
+  async function reactAndUpdateCount(postId: string, reactionType: reactType) {
+    const res = await params.react(postId, reactionType);
+
+    if (res.success) {
+      setPosts(ps =>
+        ps.map(p =>
+          p.id !== postId
+          ? p
+          : ({
+            ...p,
+            reactions: {
+              ...p.reactions,
+              [reactionType]: res.reactionCount,
+            }
+          })
+        )
+      );
+    }
+
+    return res;
+  }
 
   return <div>
     <div className={styles.postSeparator} />
     {posts.map(post =>
       <React.Fragment key={post.id}>
-        <Post post={post} react={params.react} />
+        <Post post={post} react={reactAndUpdateCount} />
         <div className={styles.postSeparator} />
       </React.Fragment>
     )}
