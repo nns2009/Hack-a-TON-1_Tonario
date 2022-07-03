@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const config = {
   port: process.env.PORT,
+  publicUrl: process.env.PUBLIC_URL!,
 
   mongoUrl: process.env.MONGO_URL!,
 
@@ -275,7 +276,7 @@ async function run() {
             id: post._id.toString(),
             title: post.title,
             text: post.text,
-            imageUrl: post.imageId && `/images/${post.imageId}`,
+            imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
             videoUrl: null,
             createdAt: post.createdAt,
           })),
