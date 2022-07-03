@@ -161,7 +161,7 @@ async function run() {
           return;
         }
 
-        const paymentChannel = PaymentChannel.create(tonClient, {
+        const paymentChannel = PaymentChannel.create({
           isA: false,
           channelId: new BN(channel._id.toString(), 'hex'),
           myKeyPair: serviceKeyPair,
@@ -172,7 +172,7 @@ async function run() {
           initBalanceB: new BN(0),
         });
 
-        const channelState = await paymentChannel.getChannelState();
+        const channelState = await paymentChannel.getChannelState(tonClient);
 
         if (channelState !== PaymentChannel.STATE_OPEN) {
           res
@@ -181,7 +181,7 @@ async function run() {
           return;
         }
 
-        const paymentChannelData = await paymentChannel.getData();
+        const paymentChannelData = await paymentChannel.getData(tonClient);
 
         await channelCollection.updateOne({
           _id: new ObjectId(channelId),
