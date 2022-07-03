@@ -5,6 +5,7 @@ import styles from './Feed.module.scss';
 import Post from './Post';
 import { PostInfo, reactType } from './shared/model';
 import { ReactPlain, RequestContentPlain } from './App';
+import { Button, SingleButton } from './UI';
 
 
 const cursorStorageKey = 'feedCursor';
@@ -16,7 +17,7 @@ function Feed(params: {
   react: ReactPlain,
 }) {
   const [showRecentPostsButton, setShowRecentPostsButton] = useState(false);
-  const [cursor, setCursor] = useState(
+  const [cursor, setCursor] = useState<string | undefined | null>(
     () => localStorage.getItem(cursorStorageKey) ?? undefined);
   const [posts, setPosts] = useState<PostInfo[]>([]);
 
@@ -29,12 +30,13 @@ function Feed(params: {
       localStorage.setItem(cursorStorageKey, res.next);
     else
       localStorage.removeItem(cursorStorageKey);
-    setCursor(res.next ?? undefined);
+    setCursor(res.next);
 
     if ('error' in res) throw new Error(JSON.stringify(res));
     return res.posts;
   }
   async function loadAndAppendPosts() {
+    if (cursor === null) return;
     const loadedPosts = await loadPosts(cursor);
     setPosts(ps => [...ps, ...loadedPosts]);
   }
@@ -112,10 +114,17 @@ function Feed(params: {
         <div className={styles.postSeparator} />
       </React.Fragment>
     )}
-    {posts.length === 0
-      ? (<div>Insufficient balance. Need to open new payment channel.</div>)
-      : (<div>End</div>)
-    }
+
+    {cursor === null &&
+    <div className={styles.feedEnd}>
+      <p>
+        You've reached the end of feed
+      </p>
+      <SingleButton label='Jump to recent posts' onClick={loadRecentAndRefresh} />
+    </div>}
+
+    {posts.length === 0 &&
+    <div>Insufficient balance. Need to open new payment channel.</div>}
   </div>
 }
 
