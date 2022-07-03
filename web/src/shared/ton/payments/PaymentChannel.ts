@@ -58,7 +58,7 @@ export class PaymentChannel implements Contract {
         const address = contractAddress(source);
 
         const zero = new BN(0);
-        const channelState = opts.state ?? {seqnoA: zero, seqnoB: zero, balanceA: zero, balanceB: zero}
+        const channelState = opts.state ?? {seqnoA: zero, seqnoB: zero, balanceA: opts.initBalanceA, balanceB: opts.initBalanceB}
 
         return new PaymentChannel(
             workchain,
