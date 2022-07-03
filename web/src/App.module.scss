@@ -2,33 +2,45 @@
 
 .root {
   height: 100%;
+  position: relative;
 }
 
 .statusCover {
   position: absolute;
-  z-index: 4;
+  z-index: 100;
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
 
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 
-  transition: opacity Common.$transitionDuration;
+  transition:
+    backdrop-filter Common.$transitionDuration,
+    background-color Common.$transitionDuration;
 }
 .pending {
   @extend .statusCover;
-  background-color: black;
-  opacity: 0.5;
-  //backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  //opacity: 0.5;
   pointer-events: auto;
 }
 .active {
   @extend .statusCover;
-  opacity: 0;
+  //opacity: 0;
   pointer-events: none;
+}
+
+.pendingStatus {
+  margin-bottom: 20px;
+
+  color: whitesmoke;
+  font-size: x-large;
+  //text-shadow: white 0 0 30px;
 }
 
 .link {

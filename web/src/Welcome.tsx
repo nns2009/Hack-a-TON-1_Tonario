@@ -1,17 +1,21 @@
 import { Address } from "ton";
 
 import styles from './Welcome.module.scss';
-import { StakeCompletedHandler } from "./App";
+import { SetPendingFunction, StakeCompletedHandler } from "./App";
 import {openPaymentChannel} from "./shared/ton/payments/PaymentChannelUtils";
 import {tonWalletAdapter} from "./shared/ton/ton-wallet/TonWalletWalletAdapter";
 import { Button, ButtonGroup } from "./UI";
 import Footer from "./Footer";
 
-async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
+async function stake(
+  amount: number,
+  stakeCompleted: StakeCompletedHandler,
+  setPending: SetPendingFunction
+) {
   console.log(`"Staking" ${amount} TONs`); // not Nano-TONs
   //stakeCompleted({} as any); return;
   const wallet = await tonWalletAdapter.getWallet();
-  const channel = await openPaymentChannel(wallet, amount);
+  const channel = await openPaymentChannel(wallet, amount, setPending);
   stakeCompleted(
       //Address.parse(wallet.address),
       channel,
@@ -20,17 +24,18 @@ async function stake(amount: number, stakeCompleted: StakeCompletedHandler) {
 
 
 const StakeButton = (
-  { amount, stakeCompleted } : {
+  { amount, stakeCompleted, setPending } : {
   amount: number,
   stakeCompleted: StakeCompletedHandler,
+  setPending: SetPendingFunction,
 }) =>
   <Button label={amount + ' TON'}
-    onClick={() => stake(amount, stakeCompleted)} />
+    onClick={() => stake(amount, stakeCompleted, setPending)} />
 
 
 function Welcome(
-  { stakeCompleted } :
-  { stakeCompleted: StakeCompletedHandler }
+  { stakeCompleted, setPending } :
+  { stakeCompleted: StakeCompletedHandler, setPending: SetPendingFunction }
 ) {
   return <div className={styles.welcomePage}>
     <div className={styles.window}>
@@ -48,12 +53,12 @@ function Welcome(
       </p>
 
       <ButtonGroup>
-        <StakeButton amount={0.1} stakeCompleted={stakeCompleted} />
+        <StakeButton amount={0.1} stakeCompleted={stakeCompleted} setPending={setPending} />
         {/* !!! Remove ^ */}
-        <StakeButton amount={1} stakeCompleted={stakeCompleted} />
-        <StakeButton amount={2} stakeCompleted={stakeCompleted} />
-        <StakeButton amount={5} stakeCompleted={stakeCompleted} />
-        <StakeButton amount={10} stakeCompleted={stakeCompleted} />
+        <StakeButton amount={1} stakeCompleted={stakeCompleted} setPending={setPending} />
+        <StakeButton amount={2} stakeCompleted={stakeCompleted} setPending={setPending} />
+        <StakeButton amount={5} stakeCompleted={stakeCompleted} setPending={setPending} />
+        <StakeButton amount={10} stakeCompleted={stakeCompleted} setPending={setPending} />
       </ButtonGroup>
 
       <p>You'll need to wait for about 15 seconds after signing the transaction for payment channel to open. It will take you to the next page automatically.</p>

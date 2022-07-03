@@ -10,6 +10,7 @@ import {tonWalletAdapter} from "../ton-wallet/TonWalletWalletAdapter";
 import {Buffer} from "buffer";
 import API from "../../../API";
 import {hexToBuffer} from "../utils";
+import { SetPendingFunction } from "../../../App";
 
 const createChannel = async (clientAddress: string, clientPublicKey: Buffer) => {
     const {channelId, serviceAddress, servicePublicKey} = await API.createChannel({clientAddress, clientPublicKey: clientPublicKey.toString('hex')});
@@ -83,7 +84,10 @@ const getOpenChannelBody = async (wallet: Wallet, channel: PaymentChannel): Prom
 }
 
 
-export const openPaymentChannel = async (wallet: Wallet, amount: number): Promise<PaymentChannel> => {
+export const openPaymentChannel = async (
+    wallet: Wallet, amount: number,
+    setPending: SetPendingFunction,
+): Promise<PaymentChannel> => {
     const myKeyPair = await mnemonicToWalletKey(await mnemonicNew(24));
     const channelService = await createChannel(wallet.address, myKeyPair.publicKey);
     console.log(myKeyPair, channelService)
@@ -110,12 +114,14 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
     await tonWalletAdapter.awaitReadiness();
     await tonWalletAdapter.requestCustomTransfer(openChannelBody);
 
+    setPending("Pending payment channel approval");
     const sleep = (m: any) => new Promise(r => setTimeout(r, m))
 
     for (let x = 0; x < 100; x++) {
         const state = await channel.getChannelState(tonClient)
         if (state === PaymentChannel.STATE_OPEN) {
             await API.initChannel({channelId: channel.channelId.toString(16)});
+            setPending(null);
             return channel;
         }
         await sleep(1000)

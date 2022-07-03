@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Address } from 'ton';
 import FadeLoader from "react-spinners/FadeLoader";
 import BN from "bn.js";
@@ -14,6 +14,8 @@ import {CreatePostResponse, PostInfo, ReactResponse, reactType, RequestContentRe
 import {signSendTons} from "./shared/ton/payments/PaymentChannelUtils";
 import PRICES from "./shared/PRICES";
 
+
+export type SetPendingFunction = (nextPending: string | null) => void;
 
 export type StakeCompletedHandler = (paymentChannel: PaymentChannel) => void;
 
@@ -37,7 +39,7 @@ function loadPaymentChannel(): PaymentChannel | null {
 }
 
 function App() {
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
   const [paymentChannel, setPaymentChannel] = useState<PaymentChannel | null>(loadPaymentChannel);
 
   const navigate = useNavigate();
@@ -52,7 +54,7 @@ function App() {
       throw new Error(`Shouldn't be in this state (without paymentChannel) and still requesting new content`);
     try {
       const sign = await signSendTons(paymentChannel, PRICES.CREATE);
-      setPending(true);
+      setPending('Sharing ...');
       const res = await API.createPost({
         channelId: paymentChannel.channelId.toString(16),
         signature: sign,
@@ -62,7 +64,7 @@ function App() {
       navigate('share/success');
       return res;
     } finally {
-      setPending(false);
+      setPending(null);
     }
   }
 
@@ -98,16 +100,32 @@ function App() {
     })
   }
 
+  //Hack to test modal backdrop:
+  // useEffect(() => {
+  //   let lastTime = -1;
+  //   function keyPress(e: KeyboardEvent) {
+  //     if (Date.now() - lastTime < 100) return;
+  //     lastTime = Date.now();
+  //     console.log(e.key);
+  //     setPending(p => p ? null : 'Test pending info');
+  //   }
+  //   window.addEventListener('keydown', keyPress);
+  //   return () => window.removeEventListener('keydown', keyPress);
+  // }, [])
+
   return (
     <div className={styles.root}>
       <div className={pending ? styles.pending : styles.active}>
-        <FadeLoader loading={pending}
+        <div className={styles.pendingStatus}>
+          {pending}
+        </div>
+        <FadeLoader loading={pending !== null}
           color="#4cbbeb" />
       </div>
       {/* {myAddress?.toFriendly()} */}
       {
         !paymentChannel
-        ? <Welcome stakeCompleted={updatePaymentChannel} />
+        ? <Welcome stakeCompleted={updatePaymentChannel} setPending={setPending} />
         : <Main paymentChannel={paymentChannel} share={share} react={react} requestContent={requestContent} />
       }
     </div>
