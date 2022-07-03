@@ -57,7 +57,9 @@ function Main(params: {
     <Routes>
       <Route path="/" element={<RedirectToFeed />} />
       <Route path="feed" element={<Feed requestContent={params.requestContent} react={params.react} />} />
-      <Route path="share" element={<Share share={params.share} /> } />
+      <Route path="share" element={
+        <Share share={params.share} myAddress={params.paymentChannel.addressA} />
+      } />
       <Route path="share/success" element={<ShareSuccess />} />
       <Route path="about" element={<About />} />
       <Route path="*" element={<NotFound />} />
