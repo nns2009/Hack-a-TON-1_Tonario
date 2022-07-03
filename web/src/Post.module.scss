@@ -6,6 +6,11 @@
   overflow: hidden;
 }
 
+.equal {
+  flex-basis: 0;
+  flex-grow: 1;
+}
+
 .title {
   font-size: x-large;
 }

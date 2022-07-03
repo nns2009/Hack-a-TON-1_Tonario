@@ -54,9 +54,9 @@ function About() {
         Credits
       </h2>
       <div className={styles.credits}>
-        <CreditPost imageUrl="/CreditPhoto.png" title="Igor Konyakhin" text="Frontend magician" />
-        <CreditPost imageUrl="/CreditPhoto.png" title="Andrew Python" text="Payment Channel guru" />
-        <CreditPost imageUrl="/CreditPhoto.png" title="Nick Nekilov" text="Backend maker" />
+        <CreditPost imageUrl="/Igor.jpg" title="Igor Konyakhin" text="Frontend magician" />
+        <CreditPost imageUrl="/Andrew.png" title="Andrew Python" text="Payment Channel guru" />
+        <CreditPost imageUrl="/Nick.png" title="Nick Nekilov" text="Backend maker" />
       </div>
     </>
   );

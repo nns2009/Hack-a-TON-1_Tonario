@@ -8,7 +8,7 @@ import { Video } from "./UI";
 export function CreditPost(params: { imageUrl: string, title: string, text: string }) {
   const { imageUrl, title, text } = params;
 
-  return <div className={styles.post}>
+  return <div className={styles.post + ' ' + styles.equal}>
     <div className={styles.imageContainer}>
       {imageUrl && <img src={imageUrl} className={styles.image} />}
       <div className={styles.imageTitle}>{title}</div>
