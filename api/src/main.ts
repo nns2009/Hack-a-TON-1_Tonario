@@ -88,6 +88,57 @@ async function run() {
     Buffer.from(config.serviceSeed, 'hex')
   );
 
+  const checkSign = async (channelId: string, channel: any, res: Response, newChannelState: string, sign: string, sum: BN, send?: true) => {
+    const channelState = {
+          balanceA: new BN(channel.clientCurrentBalance, 10),
+          balanceB: new BN(channel.serviceCurrentBalance, 10),
+          seqnoA: new BN(channel.clientSeqNo, 10),
+          seqnoB: new BN(channel.serviceSeqNo, 10),
+        };
+
+    const paymentChannel = PaymentChannel.create({
+      isA: false,
+      channelId: new BN(channel._id.toString(), 'hex'),
+      myKeyPair: serviceKeyPair,
+      hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
+      addressA: Address.parse(channel.clientAddress),
+      addressB: Address.parse(config.serviceAddress),
+      initBalanceA: new BN(channel.clientInitialBalance, 10),
+      initBalanceB: new BN(0),
+      state: channelState
+    });
+
+    const _newChannelState = JSON.parse(newChannelState)
+    Object.keys(_newChannelState).map((key) => {
+      _newChannelState[key] = new BN(_newChannelState[key], 16)
+    })
+
+    if (!(await paymentChannel.verifyState(_newChannelState, hexToBuffer(sign)))) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid signature' });
+    }
+
+    const checkBalance = send ? _newChannelState.balanceB.eq(channelState.balanceB.sub(sum)) : _newChannelState.balanceB.eq(channelState.balanceB.add(sum));
+
+    if (!checkBalance) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid balance' });
+    }
+
+    await channelCollection.updateOne({
+      _id: new ObjectId(channelId),
+    }, {
+      $set: {
+        clientCurrentBalance: _newChannelState.balanceA.toString(10),
+        serviceCurrentBalance: _newChannelState.balanceB.toString(10),
+        clientSeqNo: _newChannelState.seqnoA.toString(10),
+        serviceSeqNo: _newChannelState.seqnoB.toString(10),
+      },
+    });
+  }
+
   const channelCollection = mongoClient.db().collection<Channel>('channels');
   const postCollection = mongoClient.db().collection<Post>('posts');
 
@@ -254,41 +305,9 @@ async function run() {
             .json({ error: 'Channel does not exist.' });
         }
 
-        const channelState = {
-          balanceA: new BN(channel.clientCurrentBalance, 10),
-          balanceB: new BN(channel.serviceCurrentBalance, 10),
-          seqnoA: new BN(channel.clientSeqNo, 10),
-          seqnoB: new BN(channel.serviceSeqNo, 10),
-        };
+        const sum = PRICES.VIEW.mul(new BN(postCount * 2))
 
-        const paymentChannel = PaymentChannel.create({
-          isA: false,
-          channelId: new BN(channel._id.toString(), 'hex'),
-          myKeyPair: serviceKeyPair,
-          hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
-          addressA: Address.parse(channel.clientAddress),
-          addressB: Address.parse(config.serviceAddress),
-          initBalanceA: new BN(channel.clientInitialBalance, 10),
-          initBalanceB: new BN(0),
-          state: channelState
-        });
-
-        const _newChannelState = JSON.parse(newChannelState)
-        Object.keys(_newChannelState).map((key) => {
-          _newChannelState[key] = new BN(_newChannelState[key], 16)
-        })
-
-        if (!(await paymentChannel.verifyState(_newChannelState, hexToBuffer(signature)))) {
-          return res
-            .status(400)
-            .json({ error: 'Invalid signature' });
-        }
-
-        if (!_newChannelState.balanceB.gte(channelState.balanceB.add(PRICES.VIEW.mul(new BN(postCount))))) {
-          return res
-            .status(400)
-            .json({ error: 'Invalid balance' });
-        }
+        await checkSign(channelId, channel, res, newChannelState, signature, sum);
 
         const postsFilter: Filter<Post> = cursor
           ? {
@@ -299,17 +318,6 @@ async function run() {
         const posts = await postCollection
           .find(postsFilter, { limit: postCount })
           .toArray();
-
-        await channelCollection.updateOne({
-          _id: new ObjectId(channelId),
-        }, {
-          $set: {
-            clientCurrentBalance: _newChannelState.balanceA.toString(10),
-            serviceCurrentBalance: _newChannelState.balanceB.toString(10),
-            clientSeqNo: _newChannelState.seqnoA.toString(10),
-            serviceSeqNo: _newChannelState.seqnoB.toString(10),
-          },
-        });
 
         res.json({
           posts: posts.map((post: WithId<Post>): PostInfo => ({
