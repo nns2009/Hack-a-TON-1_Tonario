@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import commonStyles from './Common.module.scss';
 import styles from './Feed.module.scss';
 import Post from './Post';
 import { PostInfo, reactType } from './shared/model';
@@ -14,13 +15,13 @@ function Feed(params: {
   requestContent: RequestContentPlain,
   react: ReactPlain,
 }) {
+  const [showRecentPostsButton, setShowRecentPostsButton] = useState(false);
   const [cursor, setCursor] = useState(
     () => localStorage.getItem(cursorStorageKey) ?? undefined);
   const [posts, setPosts] = useState<PostInfo[]>([]);
 
 
-
-  async function loadPosts() {
+  async function loadPosts(cursor: string | undefined) {
     lastLoadPostsTime = Date.now();
 
     const res = await params.requestContent(cursor, 8);
@@ -30,14 +31,30 @@ function Feed(params: {
       localStorage.removeItem(cursorStorageKey);
     setCursor(res.next ?? undefined);
 
-    if (!('error' in res))
-      setPosts([...posts, ...res.posts]);
+    if ('error' in res) throw new Error(JSON.stringify(res));
+    return res.posts;
+  }
+  async function loadAndAppendPosts() {
+    const loadedPosts = await loadPosts(cursor);
+    setPosts(ps => [...ps, ...loadedPosts]);
+  }
+  async function loadRecentAndRefresh() {
+    const loadedPosts = await loadPosts(undefined);
+    window.scrollTo(0, 0);
+    setPosts(loadedPosts);
   }
 
-  useEffect(() => { loadPosts(); }, []);
+  useEffect(() => { loadAndAppendPosts(); }, []);
+
 
   //ttt++;
   function onScroll() {
+    if (window.scrollY >= 5000 && !showRecentPostsButton) {
+      setShowRecentPostsButton(true);
+    } else if (window.scrollY <= 4000 && showRecentPostsButton) {
+      setShowRecentPostsButton(false);
+    }
+
     if (Date.now() - lastLoadPostsTime <= 2500) {
       // ^ Wait at least a few seconds before requesting more posts
       //console.log(`Preventing request`, Date.now() - lastLoadPostsTime);
@@ -48,7 +65,7 @@ function Feed(params: {
       + 1200 // Load posts beforehand
       >= 
       document.documentElement.scrollHeight) {
-      loadPosts();
+      loadAndAppendPosts();
     }
   }
 
@@ -80,6 +97,14 @@ function Feed(params: {
   }
 
   return <div>
+    <div className={
+      showRecentPostsButton ? styles.jumpToRecentVisible : styles.jumpToRecentHidden
+      // styles.jumpToRecent + ' ' + commonStyles.hidable + ' '
+      // + (posts.length <= 14 ? commonStyles.hidden : commonStyles.visible)
+    } onClick={loadRecentAndRefresh}>
+      Go to recent posts
+    </div>
+
     <div className={styles.postSeparator} />
     {posts.map(post =>
       <React.Fragment key={post.id}>
@@ -87,7 +112,10 @@ function Feed(params: {
         <div className={styles.postSeparator} />
       </React.Fragment>
     )}
-    {posts.length === 0 ? (<div>Insufficient balance. Need to open new payment channel.</div>) : (<div>End</div>)}
+    {posts.length === 0
+      ? (<div>Insufficient balance. Need to open new payment channel.</div>)
+      : (<div>End</div>)
+    }
   </div>
 }
 

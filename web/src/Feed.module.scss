@@ -1,3 +1,41 @@
+@use './Common.module.scss';
+
+.jumpToRecent {
+  position: fixed;
+  z-index: 3;
+  top: 20px;
+  left: 50%;
+
+  width: 170px;
+  margin-left: -85px;
+  text-align: center;
+  //transform: translateX(-50%);
+
+  padding: Common.$paddingBig;
+  border: solid 1px black;
+  border-radius: Common.$borderRadius;
+
+  cursor: pointer;
+  user-select: none;
+  
+  @extend .buttonLightBackdrop;
+  backdrop-filter: blur(4px);
+  box-shadow: rgba(255, 255, 255, 0.6) 0 0 40px;
+
+  transition:
+    opacity Common.$transitionDuration,
+    pointer-events Common.$transitionDuration,
+    background-color Common.$transitionDuration;
+}
+
+.jumpToRecentVisible {
+  @extend .jumpToRecent;
+}
+.jumpToRecentHidden {
+  @extend .jumpToRecent;
+  opacity: 0;
+  pointer-events: none;
+}
 
 .postSeparator {
   height: 16px;

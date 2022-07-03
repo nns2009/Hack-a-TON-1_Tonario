@@ -1,3 +1,37 @@
 $background-color: #282c34;
 $link-color: #61dafb;
+
+$paddingBig: 16px;
 $transitionDuration: 0.12s;
+$borderRadius: 10px;
+
+
+// .hidable {
+//   transition:
+//     opacity $transitionDuration,
+//     pointer-events $transitionDuration;
+// }
+// .visible {
+//   //@error .hidable;
+//   opacity: 1;
+//   pointer-events: initial;
+// }
+// .hidden {
+//   //@extend .hidable;
+//   opacity: 0;
+//   pointer-events: none;
+// }
+
+
+.lightBackdrop {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+.buttonLightBackdrop {
+  @extend .lightBackdrop;
+
+  //transition: background-color $transitionDuration;
+  &:hover {
+    background-color: rgba(190, 190, 190, 0.8);
+  }
+}
+
