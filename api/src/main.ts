@@ -521,16 +521,7 @@ async function run() {
           reactionType,
         };
 
-        await reactionCollection.replaceOne(
-          {
-            wallet: channel.clientAddress,
-            postId,
-          },
-          reaction,
-          {
-            upsert: true,
-          },
-        );
+        await reactionCollection.insertOne(reaction);
 
         const reactionCount = await reactionCollection.countDocuments({
           postId,
