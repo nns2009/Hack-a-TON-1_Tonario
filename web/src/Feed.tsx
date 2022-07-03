@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './Feed.module.scss';
 import Post from './Post';
 import { PostInfo } from './shared/model';
-import { RequestContentPlain } from './App';
+import { ReactPlain, RequestContentPlain } from './App';
 
 
 const cursorStorageKey = 'feedCursor';
@@ -12,6 +12,7 @@ let lastLoadPostsTime = -1;
 
 function Feed(params: {
   requestContent: RequestContentPlain,
+  react: ReactPlain,
 }) {
   const [cursor, setCursor] = useState(
     () => localStorage.getItem(cursorStorageKey) ?? undefined);
@@ -60,7 +61,7 @@ function Feed(params: {
     <div className={styles.postSeparator} />
     {posts.map(post =>
       <React.Fragment key={post.id}>
-        <Post post={post} />
+        <Post post={post} react={params.react} />
         <div className={styles.postSeparator} />
       </React.Fragment>
     )}

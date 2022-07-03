@@ -5,6 +5,8 @@ import {
   InitChannelRequest,
   InitChannelResponse,
   PostInfo,
+  ReactRequest,
+  ReactResponse,
   RequestContentRequest,
   RequestContentResponse
 } from "./shared/model";
@@ -43,10 +45,12 @@ async function createPost(params: CreatePostRequest): Promise<PostInfo> {
   return res as PostInfo;
 }
 
-// const react = requester('react');
 
 const requestContent = (params: RequestContentRequest) =>
   request<RequestContentResponse>('request-content', params);
+
+const react = (params: ReactRequest) =>
+  request<ReactResponse>('react', params);
 
 const createChannel = (params: CreateChannelRequest) =>
   request<CreateChannelResponse>('create-channel', params);
@@ -58,7 +62,7 @@ const closeChannel = (params: CloseChannelRequest) =>
   request<CloseChannelResponse>('close-channel', params);
 
 export default {
-  // react,
+  react,
   createPost,
   requestContent,
   createChannel,

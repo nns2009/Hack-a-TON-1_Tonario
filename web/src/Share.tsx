@@ -42,7 +42,7 @@ function Share(
 
     <h2>Preview</h2>
 
-    <Post post={{
+    <Post react={null} post={{
       id: 'new',
       author: '',
       title, text,

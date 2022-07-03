@@ -8,7 +8,7 @@ import NotFound from './NotFound';
 import Share from './Share';
 import API from './API';
 import ShareSuccess from './ShareSuccess';
-import {RequestContentPlain, SharePlain} from './App';
+import {ReactPlain, RequestContentPlain, SharePlain} from './App';
 import Footer from './Footer';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import {fromNano} from "ton";
@@ -33,6 +33,7 @@ function Main(params: {
   paymentChannel: PaymentChannel,
   share: SharePlain,
   requestContent: RequestContentPlain,
+  react: ReactPlain,
 }) {
   return <div className={styles.page}>
     <header className={styles.header}>
@@ -48,7 +49,7 @@ function Main(params: {
 
     <Routes>
       <Route path="/" element={<RedirectToFeed />} />
-      <Route path="feed" element={<Feed requestContent={params.requestContent} />} />
+      <Route path="feed" element={<Feed requestContent={params.requestContent} react={params.react} />} />
       <Route path="share" element={<Share share={params.share} /> } />
       <Route path="share/success" element={<ShareSuccess />} />
       <Route path="about" element={<About />} />

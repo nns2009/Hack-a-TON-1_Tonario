@@ -1,3 +1,6 @@
+@use './Common.module.scss';
+
+$borderRadius: 10px;
 
 .post {
   border: solid 1px black;
@@ -34,12 +37,38 @@
   //right: 0;
   padding: 10px 14px 10px 10px;
   //padding-right: 14px;
-  border-top-right-radius: 10px;
+  border-top-right-radius: $borderRadius;
 
   color: whitesmoke;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
 }
+
+.reactionsContainer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  overflow: hidden;
+  border-top-left-radius: $borderRadius;
+
+  user-select: none;
+}
+
+.reaction {
+  display: inline-block;
+  padding: 10px;
+
+  cursor: pointer;
+
+  transition: background-color Common.$transitionDuration;
+  background-color: rgba(255, 255, 255, 0.5);
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+
 
 .youtubeLinkContainer {
   margin: 10px;
@@ -51,6 +80,10 @@
   &:hover {
     text-decoration: underline;
   }
+}
+
+.postInfo {
+  margin: 10px;
 }
 
 .text {

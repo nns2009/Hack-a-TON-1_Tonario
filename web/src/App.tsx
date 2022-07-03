@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Address } from 'ton';
 import FadeLoader from "react-spinners/FadeLoader";
+import BN from "bn.js";
 
 import './Global.scss';
 import styles from './App.module.scss';
@@ -9,16 +10,17 @@ import Main from './Main';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import API from './API';
 import { useNavigate } from 'react-router-dom';
-import {CreatePostResponse, PostInfo, RequestContentResponse} from './shared/model';
+import {CreatePostResponse, PostInfo, ReactResponse, reactType, RequestContentResponse} from './shared/model';
 import {signSendTons} from "./shared/ton/payments/PaymentChannelUtils";
 import PRICES from "./shared/PRICES";
-import BN from "bn.js";
 
 
 export type StakeCompletedHandler = (paymentChannel: PaymentChannel) => void;
 
 export type RequestContentPlain = (cursor: string | undefined, count: number) => Promise<RequestContentResponse>;
 export type SharePlain = (title: string, text: string, image: File | null) => Promise<CreatePostResponse>;
+export type ReactPlain = (postId: string, reactionType: reactType) => Promise<ReactResponse>;
+
 
 const paymentChannelStorageKey = 'paymentChannel';
 function savePaymentChannel(paymentChannel: PaymentChannel) {
@@ -79,6 +81,22 @@ function App() {
     });
   }
 
+  async function react(postId: string, reactionType: reactType): Promise<ReactResponse> {
+    if (!paymentChannel)
+      throw new Error(`Shouldn't be in this state (without paymentChannel) and still trying to react`);
+
+    console.log(`Trying to react to post #${postId} with '${reactionType}'`);
+    const sign = 'asdf'; // !!! fill
+
+    return await API.react({
+      channelId: paymentChannel.channelId.toString(16),
+      signature: sign,
+      newChannelState: JSON.stringify(paymentChannel.channelState),
+      postId,
+      reactionType,
+    })
+  }
+
   return (
     <div className={styles.root}>
       <div className={pending ? styles.pending : styles.active}>
@@ -89,7 +107,7 @@ function App() {
       {
         !paymentChannel
         ? <Welcome stakeCompleted={updatePaymentChannel} />
-        : <Main paymentChannel={paymentChannel} share={share} requestContent={requestContent} />
+        : <Main paymentChannel={paymentChannel} share={share} react={react} requestContent={requestContent} />
       }
     </div>
   );

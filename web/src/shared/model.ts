@@ -79,7 +79,7 @@ export interface CreatePostRequest {
 
 export type CreatePostResponse = PostInfo;
 
-export type reactType = ("like" | "fire" | "diamond");
+export type reactType = ("like" | "fire" | "brilliant");
 
 export interface ReactRequest {
   channelId: string
