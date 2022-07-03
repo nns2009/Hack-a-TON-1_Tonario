@@ -118,18 +118,19 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
     throw Error('Payment Channel not open')
 }
 
-export const signSendTons = async (channel: PaymentChannel, amount: number): Promise<string> => {
+export const signSendTons = async (channel: PaymentChannel, amount: BN): Promise<string> => {
     let channelState = channel.channelState;
+    console.log(channelState);
     if (channel.isA) {
         channelState.seqnoA = channelState.seqnoA.add(new BN(1));
-        if (channelState.balanceA.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
-        channelState.balanceA = channelState.balanceA.sub(toNano(amount));
-        channelState.balanceB = channelState.balanceB.add(toNano(amount));
+        if (channelState.balanceA.cmp(amount) === -1) throw Error("Insufficient balance")
+        channelState.balanceA = channelState.balanceA.sub(amount);
+        channelState.balanceB = channelState.balanceB.add(amount);
     } else {
         channelState.seqnoB = channelState.seqnoB.add(new BN(1));
-        if (channelState.balanceB.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
-        channelState.balanceB = channelState.balanceB.sub(toNano(amount));
-        channelState.balanceA = channelState.balanceA.add(toNano(amount));
+        if (channelState.balanceB.cmp(amount) === -1) throw Error("Insufficient balance")
+        channelState.balanceB = channelState.balanceB.sub(amount);
+        channelState.balanceA = channelState.balanceA.add(amount);
     }
 
     channel.channelState = channelState;
@@ -137,18 +138,18 @@ export const signSendTons = async (channel: PaymentChannel, amount: number): Pro
     return sign.toString('hex');
 }
 
-export const signReceiveTons = async (channel: PaymentChannel, amount: number): Promise<string> => {
+export const signReceiveTons = async (channel: PaymentChannel, amount: BN): Promise<string> => {
     let channelState = channel.channelState;
     if (!channel.isA) {
         channelState.seqnoA = channelState.seqnoA.add(new BN(1));
-        if (channelState.balanceA.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
-        channelState.balanceA = channelState.balanceA.sub(toNano(amount));
-        channelState.balanceB = channelState.balanceB.add(toNano(amount));
+        if (channelState.balanceA.cmp(amount) === -1) throw Error("Insufficient balance")
+        channelState.balanceA = channelState.balanceA.sub(amount);
+        channelState.balanceB = channelState.balanceB.add(amount);
     } else {
         channelState.seqnoB = channelState.seqnoB.add(new BN(1));
-        if (channelState.balanceB.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
-        channelState.balanceB = channelState.balanceB.sub(toNano(amount));
-        channelState.balanceA = channelState.balanceA.add(toNano(amount));
+        if (channelState.balanceB.cmp(amount) === -1) throw Error("Insufficient balance")
+        channelState.balanceB = channelState.balanceB.sub(amount);
+        channelState.balanceA = channelState.balanceA.add(amount);
     }
 
     channel.channelState = channelState;
