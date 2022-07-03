@@ -205,6 +205,7 @@ async function run() {
       const {
         channelId,
         postCount,
+        channelState,
         signature,
         cursor,
       } = req.body;
