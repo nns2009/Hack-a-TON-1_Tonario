@@ -3,7 +3,9 @@ import {
   CreateChannelResponse,
   InitChannelRequest,
   InitChannelResponse,
-  PostInfo
+  PostInfo,
+  RequestContentRequest,
+  RequestContentResponse
 } from "./shared/model";
 
 
@@ -22,12 +24,6 @@ async function request<T>(method: string, params: object): Promise<T> {
 }
 
 
-// const react = requester('react');
-// const createChannel = requester('create-channel');
-// const initChannel = requester('init-channel');
-const requestContent = (postCount: number) =>
-  request<PostInfo[]>('request-content', { postCount });
-
 
 async function createPost(title: string, text: string, image: File | null): Promise<PostInfo> {
   const formData = new FormData();
@@ -35,7 +31,6 @@ async function createPost(title: string, text: string, image: File | null): Prom
   formData.append('text', text);
   if (image)
     formData.append('image', image);
-  //formData.append('testParam', 'testValue');
 
   const resp = await fetch(baseUrl + 'create-post', {
     method: 'post',
@@ -45,9 +40,13 @@ async function createPost(title: string, text: string, image: File | null): Prom
   return res as PostInfo;
 }
 
+// const react = requester('react');
+
+const requestContent = (params: RequestContentRequest) =>
+  request<RequestContentResponse>('request-content', params);
+
 const createChannel = (params: CreateChannelRequest) =>
   request<CreateChannelResponse>('create-channel', params);
-
 
 const initChannel = (params: InitChannelRequest) =>
   request<InitChannelResponse>('init-channel', params);
@@ -55,8 +54,6 @@ const initChannel = (params: InitChannelRequest) =>
 
 export default {
   // react,
-  // createChannel,
-  // initChannel,
   createPost,
   requestContent,
   createChannel,

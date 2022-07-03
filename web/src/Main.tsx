@@ -8,6 +8,7 @@ import NotFound from './NotFound';
 import Share from './Share';
 import API from './API';
 import ShareSuccess from './ShareSuccess';
+import { RequestContentPlain } from './App';
 
 
 
@@ -26,6 +27,7 @@ const NavLink = (params: { to: string, title: string }) =>
 
 function Main(params: {
   share: typeof API.createPost,
+  requestContent: RequestContentPlain,
 }) {
   return <div>
     <header className={styles.header}>
@@ -39,7 +41,7 @@ function Main(params: {
 
     <Routes>
       <Route path="/" element={<RedirectToFeed />} />
-      <Route path="feed" element={<Feed />} />
+      <Route path="feed" element={<Feed requestContent={params.requestContent} />} />
       <Route path="share" element={<Share share={params.share} /> } />
       <Route path="share/success" element={<ShareSuccess />} />
       <Route path="about" element={<About />} />

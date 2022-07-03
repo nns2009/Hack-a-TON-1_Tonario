@@ -9,9 +9,12 @@ import Main from './Main';
 import {PaymentChannel} from "./shared/ton/payments/PaymentChannel";
 import API from './API';
 import { useNavigate } from 'react-router-dom';
+import { RequestContentResponse } from './shared/model';
 
 
 export type StakeCompletedHandler = (paymentChannel: PaymentChannel) => void;
+
+export type RequestContentPlain = (cursor: string | undefined, count: number) => Promise<RequestContentResponse>;
 
 const paymentChannelStorageKey = 'paymentChannel';
 function savePaymentChannel(paymentChannel: PaymentChannel) {
@@ -44,11 +47,23 @@ function App() {
     try {
       setPending(true);
       const res = await API.createPost(title, text, image);
-      navigate('success');
+      navigate('share/success');
       return res;
     } finally {
       setPending(false);
     }
+  }
+
+  async function requestContent(cursor: string | undefined, postCount: number): Promise<RequestContentResponse> {
+    if (!paymentChannel)
+      throw new Error(`Shouldn't be in this state (without paymentChannel) and still requesting new content`);
+
+    return await API.requestContent({
+      channelId: paymentChannel.channelId.toString(),
+      signature: 'muha', // !!!!
+      postCount,
+      cursor,
+    });
   }
 
   return (
@@ -62,7 +77,7 @@ function App() {
         !paymentChannel
         ? <Welcome stakeCompleted={updatePaymentChannel} />
         : <div className={styles.page}>
-          <Main share={share} />
+          <Main share={share} requestContent={requestContent} />
         </div>
       }
     </div>

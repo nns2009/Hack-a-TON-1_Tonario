@@ -1,3 +1,4 @@
+import { baseUrl } from './API';
 import styles from './Post.module.scss';
 import { PostInfo } from "./shared/model";
 import { Video } from "./UI";
