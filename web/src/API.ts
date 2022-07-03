@@ -1,4 +1,10 @@
-import { PostInfo } from "./shared/model";
+import {
+  CreateChannelRequest,
+  CreateChannelResponse,
+  InitChannelRequest,
+  InitChannelResponse,
+  PostInfo
+} from "./shared/model";
 
 
 const baseUrl = 'https://api.onlygrams.io/'; // 'http://localhost:3200/';
@@ -22,6 +28,7 @@ async function request<T>(method: string, params: object): Promise<T> {
 const requestContent = (postCount: number) =>
   request<PostInfo[]>('request-content', { postCount });
 
+  
 async function createPost(title: string, text: string, image: File | null): Promise<PostInfo> {
   const formData = new FormData();
   formData.append('title', title);
@@ -38,10 +45,20 @@ async function createPost(title: string, text: string, image: File | null): Prom
   return res as PostInfo;
 }
 
+const createChannel = (params: CreateChannelRequest) =>
+  request<CreateChannelResponse>('create-channel', params);
+
+
+const initChannel = (params: InitChannelRequest) =>
+  request<InitChannelResponse>('init-channel', params);
+
+
 export default {
   // react,
   // createChannel,
   // initChannel,
   createPost,
   requestContent,
+  createChannel,
+  initChannel,
 };

@@ -5,7 +5,7 @@ import BN from "bn.js";
 import { KeyPair, sign, signVerify } from 'ton-crypto';
 import { Buffer } from 'buffer';
 import { PaymentChannelSource } from './sources/PaymentChannelSource';
-import { ClosingConfig } from './types';
+import {ChannelState, ClosingConfig} from './types';
 import {
     createOneSignature,
     createTwoSignature,
@@ -30,7 +30,7 @@ import {
 import GetMethodParser from '../getMethodParser';
 
 export class PaymentChannel implements Contract {
-    static create(client: TonClient, opts: {
+    static create(opts: {
         isA: boolean,
         channelId: BN,
         myKeyPair: KeyPair,
@@ -40,7 +40,8 @@ export class PaymentChannel implements Contract {
         addressA: Address,
         addressB: Address,
         closingConfig?: ClosingConfig,
-        excessFee?: BN
+        excessFee?: BN,
+        state?: ChannelState
     }) {
         const workchain = 0;
         const publicKeyA = opts.isA ? opts.myKeyPair.publicKey : opts.hisPublicKey;
@@ -56,8 +57,10 @@ export class PaymentChannel implements Contract {
         });
         const address = contractAddress(source);
 
+        const zero = new BN(0);
+        const channelState = opts.state ?? {seqnoA: zero, seqnoB: zero, balanceA: opts.initBalanceA, balanceB: opts.initBalanceB}
+
         return new PaymentChannel(
-            client,
             workchain,
             publicKeyA,
             publicKeyB,
@@ -70,12 +73,11 @@ export class PaymentChannel implements Contract {
             opts.addressB,
             source,
             address,
+            channelState,
             opts.closingConfig,
             opts.excessFee,
         );
     }
-
-    readonly client: TonClient;
 
     readonly address: Address;
 
@@ -105,8 +107,9 @@ export class PaymentChannel implements Contract {
 
     readonly closingConfig?: ClosingConfig;
 
+    private pChannelState: ChannelState;
+
     constructor(
-        client: TonClient,
         workchain: number,
         publicKeyA: Buffer,
         publicKeyB: Buffer,
@@ -119,10 +122,10 @@ export class PaymentChannel implements Contract {
         addressB: Address,
         source: PaymentChannelSource,
         address: Address,
+        channelState: ChannelState,
         closingConfig?: ClosingConfig,
         excessFee?: BN,
     ) {
-        this.client = client;
         this.address = address;
         this.source = source;
         this.workchain = workchain;
@@ -135,6 +138,7 @@ export class PaymentChannel implements Contract {
         this.initBalanceB = initBalanceB;
         this.addressA = addressA;
         this.addressB = addressB;
+        this.pChannelState = channelState;
         this.closingConfig = closingConfig;
         this.excessFee = excessFee;
     }
@@ -391,13 +395,13 @@ export class PaymentChannel implements Contract {
 
     static STATE_AWAITING_FINALIZATION = 4;
 
-    async getChannelState(): Promise<number> {
-        const { stack, exit_code } = await this.client.callGetMethodWithError(this.address, 'get_channel_state');
+    async getChannelState(client: TonClient): Promise<number> {
+        const { stack, exit_code } = await client.callGetMethodWithError(this.address, 'get_channel_state');
         if (exit_code < 0) { return PaymentChannel.STATE_UNINITED; }
         return new BN(stack[0][1].replace(/^0x/, ''), 'hex').toNumber();
     }
 
-    async getData(): Promise<{
+    async getData(client: TonClient): Promise<{
         state: number,
         balanceA: BN,
         balanceB: BN,
@@ -419,7 +423,7 @@ export class PaymentChannel implements Contract {
             if (hex.length % 2 !== 0) hex = `0${hex}`;
             return Buffer.from(hex, 'hex');
         };
-        const { stack } = await this.client.callGetMethod(this.address, 'get_channel_data');
+        const { stack } = await client.callGetMethod(this.address, 'get_channel_data');
 
         const result = GetMethodParser.parseStack(stack);
         console.log(result);
@@ -459,100 +463,11 @@ export class PaymentChannel implements Contract {
         };
     }
 
-    // TODO. Сделать по другому.
-    // /**
-    //  * @param params {{wallet: WalletContract, secretKey: Uint8Array}}
-    //  * @return {{deploy: Function, init: Function, topUp: Function, close: Function, commit: Function, startUncooperativeClose: Function, challengeQuarantinedState: Function, settleConditionals: Function, finishUncooperativeClose: Function}}
-    //  */
-    // fromWallet(params) {
-    //     const {wallet, secretKey} = params;
-    //
-    //     const transfer = (payloadPromise, needStateInit) => {
-    //
-    //         const createPromise = async (amount) => {
-    //             const stateInit = needStateInit ? (await this.createStateInit()).stateInit : null
-    //             const myAddress = await this.getAddress();
-    //             const seqno = (await wallet.methods.seqno().call()) || 0;
-    //             const payload = await payloadPromise;
-    //
-    //             return wallet.methods.transfer({
-    //                 secretKey: secretKey,
-    //                 toAddress: myAddress.toString(true, true, true),
-    //                 amount: amount,
-    //                 seqno: seqno,
-    //                 payload, // body
-    //                 stateInit,
-    //                 sendMode: 3
-    //             });
-    //         }
-    //
-    //         return {
-    //             /**
-    //              * @param amount    {BN}    in Toncoins
-    //              */
-    //             send: (amount) => {
-    //                 return createPromise(amount).then(x => x.send());
-    //             },
-    //             /**
-    //              * @param amount    {BN}    in Toncoins
-    //              */
-    //             estimateFee: (amount) => {
-    //                 return createPromise(amount).then(x => x.estimateFee());
-    //             }
-    //         }
-    //     }
-    //
-    //     return {
-    //         deploy: () => {
-    //             return transfer(null, true);
-    //         },
-    //         /**
-    //          * @param params    {{balanceA: BN, balanceB: BN}}
-    //          */
-    //         init: (params) => {
-    //             return transfer(this.createInitChannel(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          * @param params    {{coinsA: BN, coinsB: BN}}
-    //          */
-    //         topUp: (params) => {
-    //             return transfer(this.createTopUpBalance(params));
-    //         },
-    //         /**
-    //          * @param params    {{hisSignature: Uint8Array, balanceA: BN, balanceB: BN, seqnoA: BN, seqnoB: BN}}
-    //          */
-    //         close: (params) => {
-    //             return transfer(this.createCooperativeCloseChannel(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          * @param params    {{hisSignature: Uint8Array, seqnoA: BN, seqnoB: BN}}
-    //          */
-    //         commit: (params) => {
-    //             return transfer(this.createCooperativeCommit(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          * @param params    {{signedSemiChannelStateA: Cell, signedSemiChannelStateB: Cell}}
-    //          */
-    //         startUncooperativeClose: (params) => {
-    //             return transfer(this.createStartUncooperativeClose(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          * @param params    {{signedSemiChannelStateA: Cell, signedSemiChannelStateB: Cell}}
-    //          */
-    //         challengeQuarantinedState: (params) => {
-    //             return transfer(this.createChallengeQuarantinedState(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          * @param params    {{conditionalsToSettle: Cell | null}}
-    //          */
-    //         settleConditionals: (params) => {
-    //             return transfer(this.createSettleConditionals(params).then(x => x.cell));
-    //         },
-    //         /**
-    //          */
-    //         finishUncooperativeClose: () => {
-    //             return transfer(this.createFinishUncooperativeClose());
-    //         }
-    //     }
-    // }
+    get channelState() {
+        return this.pChannelState;
+    }
+
+    set channelState(newState) {
+        this.pChannelState = newState;
+    }
 }

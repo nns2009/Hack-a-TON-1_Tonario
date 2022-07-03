@@ -2,51 +2,21 @@ import {Wallet} from "../ton-wallet/types/Wallet";
 import {PaymentChannel} from "./PaymentChannel";
 import {tonClient} from "../index";
 import BN from "bn.js";
-import {Address, Cell, CellMessage, CommonMessageInfo, StateInit, toNano} from "ton";
-import axios from "axios";
-import {mnemonicToWalletKey, mnemonicNew} from "ton-crypto";
-import {InternalMessage} from "ton";
+import {Address, Cell, CellMessage, CommonMessageInfo, InternalMessage, StateInit, toNano} from "ton";
+import {mnemonicNew, mnemonicToWalletKey} from "ton-crypto";
 import GetMethodParser from "../getMethodParser";
 import {tonWalletAdapter} from "../ton-wallet/TonWalletWalletAdapter";
 import {Buffer} from "buffer";
+import API from "../../../API";
 
 const createChannel = async (clientAddress: string, clientPublicKey: Buffer) => {
     const hexToBuffer = (hex: string): Buffer => {
       if (hex.length % 2 !== 0) hex = `0${hex}`;
       return Buffer.from(hex, 'hex');
     };
-    let headers: Record<string, any> = {
-            'Content-Type': 'application/json',
-        }
-    let res = await axios.post('http://localhost:3200/create-channel', JSON.stringify({
-            clientAddress,
-            clientPublicKey: clientPublicKey.toString('hex')
-        }), {
-            headers,
-            timeout: 5000,
-        });
-    if (res.status !== 200) {
-        throw Error('Received error: ' + JSON.stringify(res.data));
-    }
-    const {channelId, serviceAddress, servicePublicKey} = res.data;
+    const {channelId, serviceAddress, servicePublicKey} = await API.createChannel({clientAddress, clientPublicKey: clientPublicKey.toString('hex')});
     return {channelId: new BN(channelId, 16), address: serviceAddress, publicKey: hexToBuffer(servicePublicKey)};
 }
-
-const initChannel = async (channel: PaymentChannel) => {
-    let headers: Record<string, any> = {
-            'Content-Type': 'application/json',
-        }
-    let res = await axios.post('http://localhost:3200/init-channel', JSON.stringify({
-            channelId: channel.channelId
-        }), {
-            headers,
-            timeout: 5000,
-        });
-    if (res.status !== 200) {
-        throw Error('Received error: ' + JSON.stringify(res.data));
-    }
-}
-
 
 
 const getOpenChannelBody = async (wallet: Wallet, channel: PaymentChannel): Promise<Cell> => {
@@ -102,7 +72,7 @@ const getOpenChannelBody = async (wallet: Wallet, channel: PaymentChannel): Prom
 
     openChannelBody.bits.writeUint(698983191,32) // subwalletID
     openChannelBody.bits.writeUint(Math.round(Date.now() / 1000) + 60,32) // validUntil
-    openChannelBody.bits.writeUint(seqno,32) // seqno
+    openChannelBody.bits.writeUint(seqno,32); // seqno
     openChannelBody.bits.writeUint(3,8);
     openChannelBody.bits.writeUint(3,8);
     openChannelBody.bits.writeUint(3,8);
@@ -128,7 +98,7 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
         addressA: Address.parse(wallet.address),
         addressB: Address.parse(channelService.address),
     }
-    const channel = PaymentChannel.create(tonClient, channelConfig)
+    const channel = PaymentChannel.create(channelConfig)
 
     const openChannelBody = await getOpenChannelBody(wallet, channel);
 
@@ -137,13 +107,51 @@ export const openPaymentChannel = async (wallet: Wallet, amount: number): Promis
 
     const sleep = (m: any) => new Promise(r => setTimeout(r, m))
 
-    for (let x = 0; x < 15; x++) {
-        const state = await channel.getChannelState()
+    for (let x = 0; x < 30; x++) {
+        const state = await channel.getChannelState(tonClient)
         if (state === PaymentChannel.STATE_OPEN) {
-            await initChannel(channel);
+            await API.initChannel({channelId: channel.channelId.toString(16)});
             return channel;
         }
         await sleep(1000)
     }
     throw Error('Payment Channel not open')
+}
+
+export const signSendTons = async (channel: PaymentChannel, amount: number): Promise<string> => {
+    let channelState = channel.channelState;
+    if (channel.isA) {
+        channelState.seqnoA = channelState.seqnoA.add(new BN(1));
+        if (channelState.balanceA.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
+        channelState.balanceA = channelState.balanceA.sub(toNano(amount));
+        channelState.balanceB = channelState.balanceB.add(toNano(amount));
+    } else {
+        channelState.seqnoB = channelState.seqnoB.add(new BN(1));
+        if (channelState.balanceB.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
+        channelState.balanceB = channelState.balanceB.sub(toNano(amount));
+        channelState.balanceA = channelState.balanceA.add(toNano(amount));
+    }
+
+    channel.channelState = channelState;
+    const sign = await channel.signState(channel.channelState);
+    return sign.toString('hex');
+}
+
+export const signReceiveTons = async (channel: PaymentChannel, amount: number): Promise<string> => {
+    let channelState = channel.channelState;
+    if (!channel.isA) {
+        channelState.seqnoA = channelState.seqnoA.add(new BN(1));
+        if (channelState.balanceA.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
+        channelState.balanceA = channelState.balanceA.sub(toNano(amount));
+        channelState.balanceB = channelState.balanceB.add(toNano(amount));
+    } else {
+        channelState.seqnoB = channelState.seqnoB.add(new BN(1));
+        if (channelState.balanceB.cmp(toNano(amount)) === -1) throw Error("Insufficient balance")
+        channelState.balanceB = channelState.balanceB.sub(toNano(amount));
+        channelState.balanceA = channelState.balanceA.add(toNano(amount));
+    }
+
+    channel.channelState = channelState;
+    const sign = await channel.signState(channel.channelState);
+    return sign.toString('hex');
 }
