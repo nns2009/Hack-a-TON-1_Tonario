@@ -6,8 +6,9 @@ import { keyPairFromSeed } from 'ton-crypto';
 import { PostInfo } from '../../web/src/shared/model';
 import { PaymentChannel } from '../../web/src/shared/ton/payments/PaymentChannel';
 import PRICES from '../../web/src/shared/PRICES'
+import { hexToBuffer } from '../../web/src/shared/ton/utils'
 import BN from 'bn.js';
-import { Address, TonClient } from "ton";
+import {Address, toNano, TonClient} from "ton";
 import proxy from 'express-http-proxy';
 import AWS from 'aws-sdk';
 import multer from 'multer';
@@ -233,20 +234,23 @@ async function run() {
           hisPublicKey: Buffer.from(channel.clientPublicKey, 'hex'),
           addressA: Address.parse(channel.clientAddress),
           addressB: Address.parse(config.serviceAddress),
-          initBalanceA: new BN(0),
+          initBalanceA: toNano(0.1),
           initBalanceB: new BN(0),
           state: channelState
         });
 
-        const _newChannelState = JSON.parse(newChannelState);
+        const _newChannelState = JSON.parse(newChannelState)
+        Object.keys(_newChannelState).map((key) => {
+          _newChannelState[key] = new BN(_newChannelState[key], 16)
+        })
 
-        if (!(await paymentChannel.verifyState(_newChannelState, signature))) {
+        if (!(await paymentChannel.verifyState(_newChannelState, hexToBuffer(signature)))) {
           return res
             .status(400)
             .json({ error: 'Invalid signature' });
         }
 
-        if (!_newChannelState.balanceB.eq(channelState.balanceB.add(PRICES.VIEW.mul(new BN(postCount))))) {
+        if (!_newChannelState.balanceB.gte(channelState.balanceB.add(PRICES.VIEW.mul(new BN(postCount))))) {
           return res
             .status(400)
             .json({ error: 'Invalid balance' });
