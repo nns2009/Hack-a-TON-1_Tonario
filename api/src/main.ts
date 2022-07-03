@@ -56,6 +56,15 @@ interface Post {
   createdAt: string;
 }
 
+interface Reaction {
+  wallet: string;
+  postId: string;
+  reactionType: string;
+}
+
+class NotFoundError extends Error {
+}
+
 async function run() {
   const app = express();
 
@@ -141,11 +150,24 @@ async function run() {
 
   const channelCollection = mongoClient.db().collection<Channel>('channels');
   const postCollection = mongoClient.db().collection<Post>('posts');
+  const reactionCollection = mongoClient.db().collection<Reaction>('reactions');
 
   app.use(cors());
   app.use(express.json());
 
   const jsonRpcUrl = new URL(config.tonUrl);
+
+  async function getChannel(channelId: string): Promise<WithId<Channel>> {
+    const channel = await channelCollection.findOne({
+      _id: new ObjectId(channelId),
+    });
+
+    if (!channel) {
+      throw new NotFoundError('Channel does not exist.');
+    }
+
+    return channel;
+  }
 
   app.use(
     '/jsonRPC',
@@ -199,16 +221,7 @@ async function run() {
       const { channelId } = req.params;
 
       try {
-        const channel = await channelCollection.findOne({
-          _id: new ObjectId(channelId),
-        });
-
-        if (!channel) {
-          res
-            .status(404)
-            .json({ error: 'Channel does not exist.' });
-          return;
-        }
+        const channel = await getChannel(channelId);
 
         res.json({
           channelId,
@@ -226,16 +239,7 @@ async function run() {
       const { channelId } = req.body;
 
       try {
-        const channel = await channelCollection.findOne({
-          _id: new ObjectId(channelId),
-        });
-
-        if (!channel) {
-          res
-            .status(404)
-            .json({ error: 'Channel does not exist.' });
-          return;
-        }
+        const channel = await getChannel(channelId);
 
         if (channel.initialized) {
           res
@@ -295,15 +299,7 @@ async function run() {
       } = req.body;
 
       try {
-        const channel = await channelCollection.findOne({
-          _id: new ObjectId(channelId),
-        });
-
-        if (!channel) {
-          return res
-            .status(400)
-            .json({ error: 'Channel does not exist.' });
-        }
+        const channel = await getChannel(channelId);
 
         const sum = PRICES.VIEW.mul(new BN(postCount * 2))
 
@@ -327,6 +323,7 @@ async function run() {
             imageUrl: post.imageId && `${config.publicUrl}/images/${post.imageId}`,
             videoUrl: null,
             createdAt: post.createdAt,
+            reactions: {},
           })),
           next: posts.length > 0
             ? posts[posts.length - 1]._id.toString()
@@ -394,7 +391,52 @@ async function run() {
     },
   );
 
+  app.post(
+    '/react',
+    async (req, res, next) => {
+      const {
+        channelId,
+        signature,
+        postId,
+        reactionType,
+      } = req.body;
+
+      try {
+        const channel = await getChannel(channelId);
+
+        // TODO: Verify if request is signed.
+
+        const reaction: Reaction = {
+          wallet: channel.clientAddress,
+          postId,
+          reactionType,
+        };
+
+        await reactionCollection.replaceOne(
+          {
+            wallet: channel.clientAddress,
+            postId,
+          },
+          reaction,
+          {
+            upsert: true,
+          },
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof NotFoundError) {
+      return res
+        .status(404)
+        .json({ error: err.message });
+    }
+
     console.error('Unexpected error:', err);
     res
       .status(500)

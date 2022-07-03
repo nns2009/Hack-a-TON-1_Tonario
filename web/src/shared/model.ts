@@ -7,7 +7,7 @@ export type PostInfo = {
   imageUrl: string | null,
   videoUrl: string | null,
   createdAt: string,
-  // reactions:
+  reactions: Record<string, number>;
 }
 
 export interface CreateChannelRequest {
@@ -59,3 +59,14 @@ export interface CreatePostRequest {
 }
 
 export type CreatePostResponse = PostInfo;
+
+export interface ReactRequest {
+  channelId: string;
+  signature: string;
+  postId: string;
+  reactionType: string;
+}
+
+export interface ReactResponse {
+  success: true;
+}
