@@ -8,8 +8,7 @@ import {
   RequestContentResponse
 } from "./shared/model";
 
-
-export const baseUrl = 'https://api.onlygrams.io/'; // 'http://localhost:3200/';
+export const baseUrl = process.env.REACT_APP_API_URL + '/';
 
 async function request<T>(method: string, params: object): Promise<T> {
   const resp = await fetch(baseUrl + method, {

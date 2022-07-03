@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
-import { MongoClient, ObjectId, WithId } from 'mongodb';
+import { Filter, MongoClient, ObjectId, WithId } from 'mongodb';
 import { omit } from 'lodash';
 import { keyPairFromSeed } from 'ton-crypto';
 import { PostInfo } from '../../web/src/shared/model';
@@ -263,11 +263,14 @@ async function run() {
             .json({ error: 'Invalid balance' });
         }
 
+        const postsFilter: Filter<Post> = cursor
+          ? {
+            _id: { $gt: new ObjectId(cursor) }
+          }
+          : {};
+
         const posts = await postCollection
-          .find(
-            {},
-            { limit: postCount },
-          )
+          .find(postsFilter, { limit: postCount })
           .toArray();
 
         await channelCollection.updateOne({
@@ -290,7 +293,9 @@ async function run() {
             videoUrl: null,
             createdAt: post.createdAt,
           })),
-          next: new ObjectId().toString(),
+          next: posts.length > 0
+            ? posts[posts.length - 1]._id.toString()
+            : null,
         });
       } catch (error) {
         next(error);
