@@ -539,7 +539,15 @@ async function run() {
           },
         );
 
-        res.json({ success: true });
+        const reactionCount = await reactionCollection.countDocuments({
+          postId,
+          reactionType,
+        });
+
+        res.json({
+          success: true,
+          reactionCount,
+        });
       } catch (error) {
         next(error);
       }

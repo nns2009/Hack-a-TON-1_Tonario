@@ -91,4 +91,5 @@ export interface ReactRequest {
 
 export interface ReactResponse {
   success: true;
+  reactionCount: number;
 }
